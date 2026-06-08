@@ -96,4 +96,4 @@ npm run build:pro
 - Redis（BSD 3-Clause License）
 
 ## License
-本项目采用 MIT 开源协议，详见 [LICENSE](LICENSE) 文件。
+本项目采用 MIT 开源协议，详见 [LICENSE](https://gitcode.com/huangyaoben/VUE3Pro/blob/main/StoreWeb/LICENSE) 文件。
