@@ -1,0 +1,162 @@
+{
+	"easycom": {
+		"autoscan": true,
+		"custom": {
+			"tui-(.*)": "@/components/thorui/tui-$1/tui-$1.vue",
+			"^u-(.*)": "@/components/uview-ui/components/u-$1/u-$1.vue"
+		}
+	},
+	"pages": [
+
+		{
+			"path": "pages/index/home",
+			"style": {
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": false
+			}
+
+		}, {
+			"path": "pages/index/my",
+			"style": {
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": false
+			}
+
+		}
+
+		, {
+			"path": "pages/my/login",
+			"style": {
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": false
+			}
+
+		}
+		,	{
+			"path": "pages/provider/order",
+			"style": {
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": true
+			}
+
+		}
+	    ,{
+            "path" : "pages/store/add",
+            "style" :                                                                                    
+            {
+				"navigationStyle": "custom",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+        ,{
+            "path" : "pages/search/items",
+            "style" :                                                                                    
+            {
+				"navigationStyle": "custom",
+                "enablePullDownRefresh": false
+            }
+            
+        },
+		{
+			"path": "pages/store/select",
+			"style": {
+				"navigationStyle": "custom",
+				"enablePullDownRefresh": false
+			}
+		
+		}
+        ,{
+            "path" : "pages/provider/detail",
+            "style" :                                                                                    
+            {
+				"navigationStyle": "custom",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+		,{
+		    "path" : "pages/store/detail",
+		    "style" :                                                                                    
+		    {
+				"navigationStyle": "custom",
+		        "enablePullDownRefresh": false
+		    }
+		    
+		}
+		,{
+		    "path" : "pages/store/order",
+		    "style" :                                                                                    
+		    {
+				"navigationStyle": "custom",
+		        "enablePullDownRefresh": true
+		    }
+		    
+		}
+        ,{
+            "path" : "pages/store/set",
+            "style" :                                                                                    
+            {
+				"navigationStyle": "custom",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+        ,{
+            "path" : "pages/my/set",
+            "style" :                                                                                    
+            {
+				"navigationStyle": "custom",
+                "enablePullDownRefresh": false
+            }
+            
+        }
+		,{
+		    "path" : "pages/store/myorder",
+		    "style" :                                                                                    
+		    {
+				"navigationStyle": "custom",
+		        "enablePullDownRefresh": false
+		    }
+		    
+		},{
+		    "path" : "pages/store/mydetail",
+		    "style" :                                                                                    
+		    {
+				"navigationStyle": "custom",
+		        "enablePullDownRefresh": false
+		    }
+		    
+		}
+    ],
+
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "度假村下单",
+		"navigationBarBackgroundColor": "#FFFFFF",
+		"backgroundColor": "#f8f8f8"
+	},
+	"tabBar": {
+		"color": "#999999",
+		"selectedColor": "#ffcc00",
+		"borderStyle": "black",
+		"backgroundColor": "#ffffff",
+		"list": [{
+				"pagePath": "pages/index/home",
+				"text": "首页",
+				"iconPath": "static/tabbar/home1.png",
+				"selectedIconPath": "static/tabbar/home2.png"
+			},
+
+			{
+				"pagePath": "pages/index/my",
+				"text": "我的",
+				"iconPath": "static/tabbar/my1.png",
+				"selectedIconPath": "static/tabbar/my2.png"
+			}
+		]
+
+	}
+
+
+}

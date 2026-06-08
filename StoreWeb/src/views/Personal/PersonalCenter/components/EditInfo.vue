@@ -1,0 +1,115 @@
+<script lang="ts" setup>
+import { FormSchema, Form } from '@/components/Form'
+import { useForm } from '@/hooks/web/useForm'
+import { useValidator } from '@/hooks/web/useValidator'
+import { reactive, ref, watch } from 'vue'
+import { ElDivider, ElMessage, ElMessageBox } from 'element-plus'
+import { useUserStore } from '@/store/modules/user'
+import request from '@/axios'
+const userSet = useUserStore()
+
+const props = defineProps({
+  userInfo: {
+    type: Object,
+    default: () => ({})
+  }
+})
+const emit = defineEmits<{
+    (e: 'refData'): void    
+}>()
+
+
+const { required, phone, maxlength, email } = useValidator()
+
+const formSchema = reactive<FormSchema[]>([
+  {
+    field: 'name',
+    label: '昵称',
+    component: 'Input',
+    colProps: {
+      span: 24
+    }
+  },
+  {
+    field: 'tel',
+    label: '手机号码',
+    component: 'Input',
+    colProps: {
+      span: 24
+    }
+  },
+  {
+    field: 'email',
+    label: '邮箱',
+    component: 'Input',
+    colProps: {
+      span: 24
+    }
+  }
+])
+
+const rules = reactive({
+  name: [required(), maxlength(50)],
+  tel: [phone()],
+  email: [email()]
+})
+
+const { formRegister, formMethods } = useForm()
+const { setValues, getElFormExpose, getFormData } = formMethods
+
+watch(
+  () => props.userInfo,
+  (value) => {
+    setValues(value)
+  },
+  {
+    immediate: true,
+    deep: true
+  }
+)
+
+const saveLoading = ref(false)
+const save = async () => {
+  const elForm = await getElFormExpose()
+  let data = {} as any 
+  Object.assign(data, await getFormData());
+  const valid = await elForm?.validate().catch((err) => {
+    console.log(err)
+  })
+  if (valid) {
+    ElMessageBox.confirm('是否确认修改?', '提示', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+      .then(async () => {
+        try {
+          saveLoading.value = true
+          // 这里可以调用修改用户信息接口
+          const res = await request.post({ url: '/api/users/updateUsr', data: {
+            tel:data.tel,
+            email:data.email,
+            name:data.name, 
+            code:data.code
+          } })
+          if(res.code === 0){
+            userSet.setUserInfo(data)
+            emit('refData')
+            ElMessage.success('修改成功')
+          }
+        } catch (error) {
+          console.log(error)
+        } finally {
+          saveLoading.value = false
+        }
+      })
+      .catch(() => { })
+  }
+}
+</script>
+
+<template>
+  <Form :rules="rules" @register="formRegister" :schema="formSchema" />
+  <ElDivider />
+  <BaseButton type="primary" @click="save">保存</BaseButton>
+</template>
