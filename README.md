@@ -85,3 +85,15 @@ npm run build:pro
 作者：天气晴
 
 技术交流：274575654@qq.com
+
+## 开源依赖致谢
+本仓库管理系统基于多款优秀开源软件构建，在此向所有开源作者致谢，各组件版权归原作者持有：
+- Vue 3（MIT License）
+- Element Plus（MIT License）
+- element-plus-admin（MIT License）
+- Spring Framework 4（Apache-2.0 License）
+- MyBatis（Apache-2.0 License）
+- Redis（BSD 3-Clause License）
+
+## License
+本项目采用 MIT 开源协议，详见 [LICENSE](LICENSE) 文件。
