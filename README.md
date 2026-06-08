@@ -14,7 +14,7 @@
 
 安全框架：Spring Security 4.x
 
-ORM：MyBatis / MyBatis-Plus
+ORM：MyBatis / MyBatis-Flex
 
 数据库：MySQL 5.7 / 8.0
 
