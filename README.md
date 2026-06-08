@@ -9,7 +9,7 @@
 ORM：MyBatis / MyBatis-Plus
 数据库：MySQL 5.7 / 8.0
 缓存：Redis
-工具：Lombok、Hutool、FastJSON、EasyExcel
+工具：Lombok、Hutool、FastJSON
 前端
 框架：Vue 3
 构建工具：Vite
@@ -26,12 +26,6 @@ UI 组件：Element Plus
 库存盘点：盘点单、盘点结果、库存修正
 数据中心：数据导入导出、报表统计
 快速启动
-1. 后端启动
-创建数据库 wms
-执行 sql/wms.sql 初始化脚本
-修改 application.yml 数据库、Redis 配置
-启动 Spring 主程序
-2. 前端启动
 bash
 运行
 # 安装依赖
@@ -56,6 +50,8 @@ npm run build:prd
 
 许可证
 本项目仅供 学习与个人使用，禁止未经授权用于商业用途。
+
 联系方式
 作者：天气晴
+
 技术交流：274575654@qq.com
