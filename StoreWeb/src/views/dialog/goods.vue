@@ -20,28 +20,31 @@
             </el-button>
 
             <el-table v-loading="listLoading" :data="list" border fit highlight-current-row style="width: 100%"
-                :height="tableHeight"  @row-dblclick="sel" @selection-change="setCheck" :header-cell-style="{ color: '#000000' }">
-                <el-table-column  type="selection" width="35" />
-                <el-table-column  prop="code" label="物资编码" width="100px" />
-                <el-table-column  prop="name" label="物资名称" width="120px" />
-                <el-table-column  prop="spec" label="规格型号" width="100px" />
-                <el-table-column  prop="En_Spec" label="英文规格" width="100px" />
-                <el-table-column  prop="unit" label="库存单位" width="100px" />
-                <el-table-column  prop="category" label="物资类别" width="100px" />
-                <el-table-column  prop="maxqty" label="最高存量" width="100px" />
-                <el-table-column  prop="minqty" label="最低存量" width="100px" />
-                <el-table-column  prop="reorder" label="再订购点" width="100px" />
-                <el-table-column  prop="costing" label="计价方法" width="100px" />
-                <el-table-column  prop="oqnum" label="经济批量" width="100px" />
-                <el-table-column  prop="levels" label="级别" width="100px" />
-                <el-table-column  prop="stat" label="状态" width="100px" />
-                <el-table-column  prop="flag" label="标志" width="100px" />
-                <el-table-column  prop="accno" label="库存商品科目" width="100px" />
-                <el-table-column  prop="cust4" label="辅助帐号项目" width="100px" />
-                <el-table-column  prop="Overacc" label="短益科目" width="100px" />
-                <el-table-column  prop="usage" label="用途" width="100px" />
+                :height="tableHeight" @row-dblclick="sel" @selection-change="setCheck"
+                :header-cell-style="{ color: '#000000' }">
+                <el-table-column type="selection" width="35" />
+                <el-table-column prop="code" label="物资编码" width="100px" />
+                <el-table-column prop="name" label="物资名称" width="120px" />
+                <el-table-column prop="spec" label="规格型号" width="100px" />
+                <el-table-column prop="En_Spec" label="英文规格" width="100px" />
+                <el-table-column prop="unit" label="库存单位" width="100px" />
+                <el-table-column prop="purunit" label="辅助单位" width="100px" />
+                <el-table-column prop="cvrnum" label="转换因子" width="100px" />
+                <el-table-column prop="category" label="物资类别" width="100px" />
+                <el-table-column prop="maxqty" label="最高存量" width="100px" />
+                <el-table-column prop="minqty" label="最低存量" width="100px" />
+                <el-table-column prop="reorder" label="再订购点" width="100px" />
+                <el-table-column prop="costing" label="计价方法" width="100px" />
+                <el-table-column prop="oqnum" label="经济批量" width="100px" />
+                <el-table-column prop="levels" label="级别" width="100px" />
+                <el-table-column prop="stat" label="状态" width="100px" />
+                <el-table-column prop="flag" label="标志" width="100px" />
+                <el-table-column prop="accno" label="库存商品科目" width="100px" />
+                <el-table-column prop="cust4" label="辅助帐号项目" width="100px" />
+                <el-table-column prop="Overacc" label="短益科目" width="100px" />
+                <el-table-column prop="usage" label="用途" width="100px" />
 
-                <el-table-column  label="操作" fixed="right" width="120">
+                <el-table-column label="操作" fixed="right" width="120">
                     <template #default="{ row }">
                         <el-button type="success" @click="sel(row)"> 选择 </el-button>
                     </template>
@@ -52,7 +55,7 @@
                 :page-sizes="[100, 200, 300, 400]" :disabled="total === 0"
                 layout="total, sizes, prev, pager, next, jumper" :total="total" @size-change="handleSizeChange"
                 @current-change="handleCurrentChange" />
-            
+
         </div>
         <el-row style="margin-bottom: -20px; margin-top: 10px; display: flex; justify-content: flex-end;">
             <el-button type="primary" @click="confirmDlg">确定</el-button>
@@ -66,7 +69,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/axios'
 
-import {  Refresh, Search } from '@element-plus/icons-vue'
+import { Refresh, Search } from '@element-plus/icons-vue'
 
 // --- 类型定义 ---
 interface Item {
@@ -130,8 +133,10 @@ const emit = defineEmits<{
 // --- 方法 ---
 const initData = async () => {
     try {
-        const res = await request.post({ url: '/api/ivitem/getTClass', data: {
-        } })
+        const res = await request.post({
+            url: '/api/ivitem/getTClass', data: {
+            }
+        })
         category.value = res.data
     } catch (error) {
         console.error(error)
@@ -180,12 +185,14 @@ const getList = async () => {
     listLoading.value = true
     keys.flag = 1
     try {
-        const res = await request.post({ url: '/api/ivitem/selectIvitemPage', data: {
-            page: page.value,
-            limit: limit.value,
-            keys: keys,
-            orders: orders.value    
-        }})
+        const res = await request.post({
+            url: '/api/ivitem/selectIvitemPage', data: {
+                page: page.value,
+                limit: limit.value,
+                keys: keys,
+                orders: orders.value
+            }
+        })
         list.value = res.data.records
         total.value = res.data.totalPage ?? 0
     } catch (error) {

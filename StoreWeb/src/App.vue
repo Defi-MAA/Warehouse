@@ -59,4 +59,15 @@ body {
 .el-scrollbar__wrap {
     overflow-x: hidden;
   }
+  /* 隐藏 Webkit 内核浏览器（Chrome、Safari 等）的上下按钮 */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0;
+  }
+
+  /* 隐藏 Firefox 的上下按钮 */
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
 </style>

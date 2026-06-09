@@ -177,10 +177,16 @@
                                 </div>
                             </template>
                         </el-table-column>
-                        <el-table-column prop="qty" label="数量" width="120px">
+                        <el-table-column prop="qty" label="数量" width="160px">
                             <template #default="{ row }">
-                                <el-input v-model="row.qty" @change="setAmt(row)" type="number" @focus="focus($event)"
-                                    placeholder="" />
+
+                                <div style="display:flex;justify-content: flex-start;">
+                                    <el-input v-model="row.qty" @change="setAmt(row)" type="number"
+                                        @focus="focus($event)" placeholder="" />
+                                    <el-button type="primary" style="margin-top: 4px;" size="small"
+                                        @click="showPieQty(row)">辅助</el-button>
+                                </div>
+
                             </template>
                         </el-table-column>
                         <el-table-column prop="price" label="库存单价" width="90px">
@@ -343,6 +349,9 @@
 
        </Dialog>
 
+       <PieQty ref="pieQtyRef" :pie-data="pieData" @confirm="confirmPieQty"></PieQty>
+
+
     </ContentWrap>
 </template>
 
@@ -358,7 +367,7 @@ import Goods from '../dialog/goods.vue'
 import Report from '../dialog/report.vue'
 import Item from '../dialog/item.vue'
 import Lot from '../dialog/lot.vue'
-
+import PieQty from '../dialog/pieqty.vue'
 import { formatToDate } from '@/utils/dateUtil'
 import { exportTable } from '@/utils/export.js'
 import { isEmpty } from '@/utils'
@@ -372,6 +381,22 @@ const background = ref(false)
 defineOptions({
     name: 'SA'
 })
+
+
+const confirmPieQty = (qty: number) => {
+    pieRow.value.qty = qty
+}
+const pieRow = ref<any>({})
+const pieQtyRef = ref(PieQty)
+const pieData = ref<any>({})
+const showPieQty = (row: any) => {
+    pieRow.value = row
+    pieData.value = { ...row }
+    pieData.value.qty =  undefined   
+    pieQtyRef.value.dlgPie = true
+}
+
+
 
 const userStore = useUserStoreWithOut()
 const typeids = ref<any[]>([{
@@ -539,6 +564,8 @@ interface OptionItem {
     name: string
     spec?: string
     unit?: string
+    purunit?: string
+    cvrnum?: number
 }
 
 interface FormData {
@@ -577,6 +604,9 @@ interface ItemData {
     expdate?: string
     memo?: string
     tline?: string
+    pieqty?: number 
+    purunit?: string
+    cvrnum?: number
     [key: string]: any
 }
 
@@ -668,7 +698,9 @@ const initData = () => {
 }
 
 const focus = (event: FocusEvent) => {
-    (event.currentTarget as HTMLInputElement).select()
+    // 拿到真正的 input 元素
+    const realInput = (event.currentTarget as HTMLElement).querySelector('input')
+    realInput?.select()
 }
 
 const addGoods = () => {
@@ -695,6 +727,9 @@ const setGoods = (item: OptionItem) => {
         expdate: '',
         memo: '',
         tline: '',
+        pieqty: undefined,
+        purunit: item.purunit,
+        cvrnum: item.cvrnum,
         index: addIndex.value++
     }
     items.value.push(obj)
@@ -723,6 +758,9 @@ const setMoreGoods = (rows: OptionItem[]) => {
             expdate: '',
             memo: '',
             tline: '',
+            pieqty: undefined,
+            purunit: item.purunit,
+            cvrnum: item.cvrnum,
             index: addIndex.value++
         }
         items.value.push(obj)

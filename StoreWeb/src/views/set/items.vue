@@ -29,6 +29,12 @@
 			</el-table-column>
 			<el-table-column align="center" prop="unit" label="库存单位" sortable="custom" width="150px">
 			</el-table-column>
+			<el-table-column align="center" prop="purunit" label="辅助单位" sortable="custom" width="150px">
+			</el-table-column>
+			
+			<el-table-column align="center" prop="cvrnum" label="转换因子" width="150px">
+			</el-table-column>
+						
 			<el-table-column align="center" prop="category" label="物资类别" sortable="custom" width="150px">
 			</el-table-column>
 			<el-table-column align="center" prop="maxqty" label="最高存量" sortable="custom" width="150px">
@@ -77,8 +83,6 @@
 				</template>
 			</el-table-column>
 			<el-table-column align="center" prop="pieunit" label="件单位" width="150px">
-			</el-table-column>
-			<el-table-column align="center" prop="cvrnum" label="转换因子" width="150px">
 			</el-table-column>
 			<el-table-column align="center" prop="memo" label="备注" width="150px">
 			</el-table-column>
@@ -183,13 +187,24 @@
 					</el-form-item>
 				</el-col>
 				<el-col :span="6">
+					<el-form-item label="再定购点" prop="reorder">
+						<el-input v-model="form.reorder"></el-input>
+					</el-form-item>
+				</el-col>
+				<el-col :span="6">
 					<el-form-item label="库存单位" prop="maxqty">
 						<el-input v-model="form.unit"></el-input>
 					</el-form-item>
 				</el-col>
 				<el-col :span="6">
-					<el-form-item label="采购单位" prop="maxqty">
+					<el-form-item label="辅助单位" prop="maxqty">
 						<el-input v-model="form.purunit"></el-input>
+					</el-form-item>
+				</el-col>
+				
+				<el-col :span="6">
+					<el-form-item label="转换因子" prop="cvrnum">
+						<el-input v-model="form.cvrnum" type="number" placeholder="库存数量/转换因子=辅助单位数量"></el-input>
 					</el-form-item>
 				</el-col>
 				<el-col :span="6">
@@ -202,11 +217,7 @@
 						<el-input type="number" v-model="form.minqty"></el-input>
 					</el-form-item>
 				</el-col>
-				<el-col :span="6">
-					<el-form-item label="再定购点" prop="reorder">
-						<el-input v-model="form.reorder"></el-input>
-					</el-form-item>
-				</el-col>
+				
 				<el-col :span="6">
 					<el-form-item label="短益科目" prop="Overacc">
 						<el-cascader filterable v-model="form.Overacc" :show-all-levels="false" :options="treeitem"
@@ -253,11 +264,7 @@
 					</el-form-item>
 				</el-col>
 
-				<el-col :span="6">
-					<el-form-item label="转换因子" prop="cvrnum">
-						<el-input v-model="form.cvrnum" type="number"></el-input>
-					</el-form-item>
-				</el-col>
+				
 				<el-col :span="6">
 					<el-form-item label="收货浮动" prop="pvftrate">
 						<el-input v-model="form.pvftrate" type="number"></el-input>
