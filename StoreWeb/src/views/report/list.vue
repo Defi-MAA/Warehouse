@@ -3,10 +3,11 @@
         <el-splitter style="display: flex;" v-if="splitterReady">
             <el-splitter-panel collapsible :max="400" :size="250" style="background-color: #fff;width: 250px;">
                 <el-scrollbar :height="(winHeight - 110) + 'px'" class="menuback">
-                    <el-menu active-text-color="var(--left-menu-text-active-color)"
+                    <el-menu  ref="menuRef" active-text-color="var(--left-menu-text-active-color)" 
+                        active-background-color="var(--left-menu-text-active-color)"
                         background-color="var(--left-menu-bg-color)" default-active="2"
                         text-color="var(--left-menu-text-color)">
-                        <el-sub-menu :index="'' + (index + 1)" v-for="(item, index) in reportType">
+                        <el-sub-menu :index="'' + (index + 1)" v-for="(item, index) in reportType" >
                             <template #title>
                                 <el-icon>
                                     <Notebook />
@@ -16,7 +17,7 @@
 
                             <el-menu-item @click="showReport(subItem)"
                                 v-for="(subItem, subIndex) in reportData.filter(o => o.category === item.name)"
-                                :index="'' + index + '-' + (subIndex + 1)"
+                                :index="'' + (index + 1) + '-' + (subIndex + 1)"
                                 active-background-color="var(--left-menu-text-active-color)"
                                 text-color="var(--left-menu-text-color)">
                                 <span>{{ subItem.name }}</span>
@@ -71,7 +72,7 @@
     </ContentWrap>
 
     <ConditionDialog ref="queryDialogRef" :list.sync="reportParams" @confirm="confirmDlg" />
-    <Dialog v-model="dlgReport" width="65%" maxHeight="500px" :title="rptTitle" @close="closeDlg">
+    <Dialog v-model="dlgReport" width="65%" maxHeight="500px" :title="rptTitle">
         <Report1 ref="myrpt0"></Report1>
     </Dialog>
 
@@ -105,7 +106,7 @@ const handleClick = (e: MouseEvent) => {
             const json = decodeURIComponent(raw)
             console.log(json)
             const params = JSON.parse(json)
-            if (params != null ) {
+            if (params != null) {
                 viewReport(params)
             }
         }
@@ -133,7 +134,7 @@ const splitterReady = ref(false)
 const previewContainer = ref(null)
 const winHeight = ref(window.innerHeight)
 
-const activeIndex = ref('')
+
 
 
 // 状态
@@ -270,13 +271,19 @@ onUnmounted(() => {
 const reportData = ref<any[]>([])
 const reportType = ref<any[]>([])
 const reportParams = ref<any[]>([])
+const menuRef = ref<any>(null)
 
 const loadReport = async () => {
     let res = await request.post({ url: '/api/report/getReport', data: {} })
     reportData.value = res.data
     res = await request.post({ url: '/api/report/getCategory', data: { category: 0 } })
     reportType.value = res.data
-    activeIndex.value = reportType.value[0].name
+    if(reportType.value.length > 0) {
+        nextTick(() => {
+            menuRef.value?.updateActiveIndex('1')
+        })
+    }
+    
 }
 
 
@@ -504,8 +511,13 @@ const loadReportData = async (code: string, params: any) => {
         nextTick(() => {
             loadTemplate(res.data.rptJson)
         })
-
+        const loading = ElLoading.service({
+            lock: true,
+            text: 'Loading',
+            background: 'rgba(0, 0, 0, 0.7)',
+        })
         await getReportData(code, params)
+        loading.close()
         console.log('报告加载成功')
     } catch (err: any) {
         ElMessage.error('报告加载失败: ' + err.message)
@@ -870,5 +882,9 @@ const crossReport = (sourceData: any, rowKey: string, rowTitle: string, colKey: 
 :deep(.preview-content td) {
     padding: 10px 12px;
     border: 1px solid #e2e8f0;
+}
+:deep  .el-menu .el-menu-item.is-active {
+    color: var(--left-menu-text-active-color) !important;
+    background-color: var(--left-menu-bg-active-color) !important;
 }
 </style>

@@ -835,7 +835,6 @@ const saveData = async (formEl: FormInstance | undefined) => {
 	})
 }
 import { Plus, View, Refresh, Delete, Document, Edit } from '@element-plus/icons-vue'
-import { de } from 'element-plus/es/locale'
 </script>
 
 
