@@ -152,7 +152,10 @@
 				</el-col>
 				<el-col :span="6">
 					<el-form-item label="级别" prop="levels">
-						<el-input type="number" v-model="form.levels"></el-input>
+						<el-select clearable v-model="form.levels" placeholder="请选择">
+							<el-option v-for="(item, index) in levels" :label="item.label" :value="item.value">
+							</el-option>
+						</el-select>
 					</el-form-item>
 				</el-col>
 
@@ -367,6 +370,33 @@ const typeids = ref<any[]>([{
 	label: '明细'
 }
 ])
+const levels = ref<any[]>([{
+	value: 0,
+	label: '无级别'
+},
+{
+	value: 1,
+	label: '一级分类'
+},
+{
+	value: 2,
+	label: '二级分类'
+},
+{
+	value: 3,
+	label: '三级分类'
+},
+{
+	value: 4,
+	label: '四级分类'
+
+},
+{
+	value: 5,
+	label: '五级分类'
+}
+])
+
 import { useSearch } from '@/hooks/web/useSearch'
 const { searchRegister, searchMethods } = useSearch()
 const { setSchema, setProps, setValues, getFormData } = searchMethods
@@ -445,7 +475,7 @@ interface formData {
 	EnSpec?: string,
 	flag?: string,
 	GoodsNo?: string,
-	levels?: string,
+	levels?: number,
 	maxqty?: string,
 	memo?: string,
 	minqty?: string,
@@ -544,7 +574,7 @@ const form = ref<formData>({
 	EnSpec: '',
 	flag: '',
 	GoodsNo: '',
-	levels: '',
+	levels: 0,
 	maxqty: '',
 	memo: '',
 	minqty: '',
@@ -726,7 +756,7 @@ const AddAction = async () => {
 		EnSpec: '',
 		flag: '',
 		GoodsNo: '',
-		levels: '',
+		levels: 0,
 		maxqty: '',
 		memo: '',
 		minqty: '',

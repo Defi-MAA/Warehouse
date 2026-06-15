@@ -143,7 +143,7 @@
               </el-header>
               <el-main>
                   <el-table v-loading="listLoading1" :data="items" :border="true" fit highlight-current-row
-                      style="width: 100%" :height="tableHeight - 180" id="out-table1" ref="gitems"
+                      style="width: 100%" height="330px" id="out-table1" ref="gitems"
                       @current-change="rowChage" :header-cell-style="{ color: '#000000' }">
                       <el-table-column prop="item" show-overflow-tooltip label="" width="90px">
                           <template #header>
@@ -1297,10 +1297,7 @@ onMounted(() => {
   initData()
 })
 
-// 由于 renderHeader 中使用了 h 函数，需要导入
-import { h } from 'vue'
-import { truncate } from 'fs'
-import { TRANSFORM_REQUEST_DATA } from '@/constants'
+
 </script>
 
 <style lang="less" scoped>

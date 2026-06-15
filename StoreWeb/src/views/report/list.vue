@@ -28,9 +28,10 @@
             <el-splitter-panel style="width: calc(100% - 250px);">
                 <el-container>
                     <el-header style="border-bottom: 1px solid #e4e7ed;background-color: #fff;padding-top: 13px;">
-                        <el-button type="danger" :icon="Printer" @click="print">打印</el-button>
                         <el-button type="primary" v-if="reportParams.length > 0" :icon="Search"
                             @click="serData">查询</el-button>
+                        <el-button type="danger" :icon="Printer" @click="print">打印</el-button>
+
                         <el-button type="success" :icon="Document" @click="exportPDF">导出PDF</el-button>
                         <!-- <el-dropdown>
                             <el-button type="primary" :icon="Document" style="margin-left: 10px;">
@@ -47,7 +48,7 @@
                     <el-main style="padding: 0px;background-color: #fff;">
                         <el-scrollbar :height="(winHeight - 170) + 'px'">
                             <!-- 预览区域 -->
-                            <div class="preview-section">
+                            <div class="preview-section" ref="scrollableDivmRef">
 
                                 <div ref="previewContainer">
                                     <div v-if="!previewReady && !hasData" class="preview-placeholder">
@@ -59,7 +60,7 @@
                                         <div class="loading-spinner"></div>
                                         <p>正在生成预览...</p>
                                     </div>
-                                    <div v-else v-html="previewHtml"></div>
+                                    <div v-else v-html="previewHtml" @click="handleClick"></div>
                                 </div>
                             </div>
                         </el-scrollbar>
@@ -69,24 +70,62 @@
         </el-splitter>
     </ContentWrap>
 
-    <ConditionDialog ref="queryDialogRef" :list="reportParams" @confirm="confirmDlg" />
-
+    <ConditionDialog ref="queryDialogRef" :list.sync="reportParams" @confirm="confirmDlg" />
+    <Dialog v-model="dlgReport" width="65%" maxHeight="500px" :title="rptTitle" @close="closeDlg">
+        <Report1 ref="myrpt0"></Report1>
+    </Dialog>
 
 
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, watch } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { hiprint } from 'vue-plugin-hiprint'
 import { Notebook, Printer, Search, Document, ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ConditionDialog from '@/views/dialog/condition.vue'
 
+import Report1 from '@/views/dialog/report.vue'
+import { Dialog } from '@/components/Dialog'
+
 import request from '@/axios'
 import { ElLoading } from 'element-plus'
+import { isEmpty } from 'lodash-es'
 
 
+const dlgReport = ref(false)
+const handleClick = (e: MouseEvent) => {
+    const target = e.target as HTMLAnchorElement
+    // 判断点击的是不是a标签
+    if (target.tagName === 'A') {
+        // 阻止a默认跳转/锚点滚动
+        e.preventDefault()
+        const raw = target.dataset.id
+        if (!isEmpty(raw)) {
+            const json = decodeURIComponent(raw)
+            console.log(json)
+            const params = JSON.parse(json)
+            if (params != null ) {
+                viewReport(params)
+            }
+        }
+    }
+}
+const myrpt0 = ref<InstanceType<typeof Report1> | null>(null)
+const rptTitle = ref('')
+const viewReport = (params) => {
 
+    dlgReport.value = true
+    rptTitle.value = "报表"
+    nextTick(async () => {
+        if (myrpt0.value) {
+            await myrpt0.value.loadReportData(
+                params.rptcode,
+                params
+            )
+        }
+    })
+}
 
 
 const splitterReady = ref(false)
@@ -163,8 +202,57 @@ window.onpopstate = function (event: PopStateEvent): void {
 };
 
 
+const scrollableDivmRef = ref<HTMLDivElement | null>(null);
+
+// 拖动状态
+const isDragging = ref(false);
+const startX = ref(0);
+const scrollLeft = ref(0);
+let dragTimer: ReturnType<typeof setTimeout> | null = null;
+
+// 鼠标移动处理函数（具名，方便移除）
+function onMouseMove(e: MouseEvent) {
+    if (!isDragging.value || !scrollableDivmRef.value) return;
+    const dx = e.clientX - startX.value;
+    scrollableDivmRef.value.scrollLeft = scrollLeft.value - dx;
+}
+
+// 鼠标按下：记录位置并启动长按定时器
+function onMouseDown(e: MouseEvent) {
+    const div = scrollableDivmRef.value;
+    if (!div) return;
+
+    startX.value = e.clientX;
+    scrollLeft.value = div.scrollLeft;
+    isDragging.value = true;
+
+    // 清除可能存在的旧定时器，防止重复触发
+    if (dragTimer) clearTimeout(dragTimer);
+
+    dragTimer = setTimeout(() => {
+        if (isDragging.value) {
+            document.addEventListener('mousemove', onMouseMove);
+        }
+    }, 500);
+}
+
+// 鼠标松开：结束拖动并清理
+function onMouseUp() {
+    isDragging.value = false;
+
+    if (dragTimer) {
+        clearTimeout(dragTimer);
+        dragTimer = null;
+    }
+
+    document.removeEventListener('mousemove', onMouseMove);
+}
+
+
+
 onMounted(async () => {
-    
+    document.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mouseup', onMouseUp);
     nextTick(() => {
         splitterReady.value = true
     })
@@ -172,6 +260,13 @@ onMounted(async () => {
     init()
     loadReport()
 })
+onUnmounted(() => {
+    // 组件卸载时彻底清理
+    document.removeEventListener('mouseup', onMouseUp);
+    document.removeEventListener('mousemove', onMouseMove);
+    if (dragTimer) clearTimeout(dragTimer);
+});
+
 const reportData = ref<any[]>([])
 const reportType = ref<any[]>([])
 const reportParams = ref<any[]>([])
@@ -179,7 +274,7 @@ const reportParams = ref<any[]>([])
 const loadReport = async () => {
     let res = await request.post({ url: '/api/report/getReport', data: {} })
     reportData.value = res.data
-    res = await request.post({ url: '/api/report/getCategory', data: {category:0} })
+    res = await request.post({ url: '/api/report/getCategory', data: { category: 0 } })
     reportType.value = res.data
     activeIndex.value = reportType.value[0].name
 }
@@ -207,7 +302,7 @@ const init = async () => {
     try {
         console.log('=== 开始初始化 ===')
 
-      
+
 
         if (!hiprintExists.value) {
             throw new Error('hiprint 未加载')
@@ -312,15 +407,15 @@ const preview = async () => {
         } else if (html && typeof html === 'object') {
             // 如果是 jQuery 对象，提取 HTML
             if (html.html && typeof html.html === 'function') {
-                previewHtml.value = baseStyle +  html.html()
+                previewHtml.value = baseStyle + html.html()
             } else if (html[0] && html[0].outerHTML) {
-                previewHtml.value = baseStyle +  html[0].outerHTML
+                previewHtml.value = baseStyle + html[0].outerHTML
             } else {
                 // 如果是普通对象，转为 JSON 字符串显示
                 previewHtml.value = baseStyle + `<pre style="padding: 20px;">${JSON.stringify(html, null, 2)}</pre>`
             }
         } else {
-            previewHtml.value = baseStyle +  String(html)
+            previewHtml.value = baseStyle + String(html)
         }
 
     } catch (err: any) {
@@ -390,11 +485,12 @@ const queryDialogRef = ref(ConditionDialog)
 const serData = async () => {
     queryDialogRef.value.dlgCondition = true
 }
-const confirmDlg = async (params: any) => {
+const confirmDlg = async () => {
     let paramsData = await getParams()
     await loadReportData(curCode.value, paramsData)
 }
 const curCode = ref('')
+const originTemplate = ref('')
 const loadReportData = async (code: string, params: any) => {
     try {
         if (!hiprintTemplate.value) {
@@ -404,12 +500,12 @@ const loadReportData = async (code: string, params: any) => {
         //hiprintTemplate.value.clear();
         let res = await request.post({ url: '/api/report/getBrpt', data: { Code: code } })
         //hiprintTemplate.value.update({})     
+        originTemplate.value = res.data.rptJson
         nextTick(() => {
             loadTemplate(res.data.rptJson)
         })
-        await getReportParams(code)
+
         await getReportData(code, params)
-        preview()
         console.log('报告加载成功')
     } catch (err: any) {
         ElMessage.error('报告加载失败: ' + err.message)
@@ -417,6 +513,7 @@ const loadReportData = async (code: string, params: any) => {
 }
 const showReport = async (item) => {
     curCode.value = item.code
+    await getReportParams(item.code)
     await loadReportData(item.code, {})
 }
 
@@ -440,14 +537,230 @@ const getReportData = async (code: string, params: any) => {
     try {
         let res = await request.post({ url: '/api/report/getReportData', data: { method: code, params: params } })
         let rptData: any = { ...params }
+
         Object.keys(res.data).forEach(key => {
             rptData[key] = res.data[key]
         });
+
         console.log(rptData)
-        loadData(rptData)
+        if (rptData.CrossReport) {
+            crossReport(rptData, rptData.CrossKey, rptData.CrossCol, rptData.CrossTitle, rptData.CrossVal, rptData.ColWidth)
+            preview()
+        } else {
+            loadData(rptData)
+            preview()
+        }
+
     } catch (err: any) {
         ElMessage.error('报告数据加载失败: ' + err.message)
     }
+}
+
+
+
+
+
+
+/** 交叉表行（动态key） */
+/** 任意明细行，字段完全动态 */
+type SourceItem = Record<string, string | number>
+
+/** 交叉表结果行，key 动态 */
+type CrossRow = Record<string, string | number>
+
+/** 表格单列配置 */
+interface TableColumnOption {
+    width: string | number
+    title: string
+    field: string
+    checked: boolean
+    columnId: string
+    fixed: boolean
+    rowspan: number
+    colspan: number
+    align: string
+}
+
+/** table 元素 options */
+interface TablePrintOptions {
+    left: number
+    top: number
+    height: number
+    width: number
+    right: number
+    bottom: number
+    vCenter: number
+    hCenter: number
+    field: string
+    coordinateSync: boolean
+    widthHeightSync: boolean
+    columns: TableColumnOption[][]
+    css?: string
+}
+
+/** 打印元素基础结构 */
+interface PrintElement {
+    options: Record<string, any>
+    printElementType: {
+        type: 'text' | 'table' | 'hline'
+        title?: string
+        [key: string]: any
+    }
+}
+
+/** 打印面板 */
+interface PanelItem {
+    index: number
+    name: string
+    height: number
+    width: number
+    paperHeader: number
+    paperFooter: number
+    printElements: PrintElement[]
+    paperNumberLeft: number
+    paperNumberTop: number
+    paperNumberContinue: boolean
+    watermarkOptions: Record<string, any>
+    panelLayoutOptions: Record<string, any>
+}
+
+/** 完整打印模板JSON */
+interface PrintTemplateJSON {
+    panels: PanelItem[]
+}
+
+
+
+/**
+ * 明细转交叉表
+ * @param list 原始明细数组
+ * @param groupField 分组字段 item
+ * @param nameField 名称字段 itemname
+ * @param dateField 日期字段 tdatea
+ * @param numField 数值字段 quantity
+ */
+function getCrossData(
+    list: SourceItem[],
+    groupField: string,
+    nameField: string,
+    dateField: string,
+    numField: string
+): { colHeaders: string[]; crossRows: CrossRow[] } {
+    // 1. 收集所有日期列
+    const colHeaders = [...new Set(list.map(item => String(item[dateField])))]
+    const groupMap = new Map<string, CrossRow>()
+
+    list.forEach(row => {
+        const groupVal = String(row[groupField])
+        const nameVal = String(row[nameField])
+        const dateKey = String(row[dateField])
+        const numVal = Number(row[numField]) || 0
+
+        // 不存在该分组则初始化：保留item、itemname，所有日期默认0
+        if (!groupMap.has(groupVal)) {
+            const initRow: CrossRow = {
+                [groupField]: groupVal,
+                [nameField]: nameVal
+            }
+            colHeaders.forEach(date => initRow[date] = 0)
+            groupMap.set(groupVal, initRow)
+        }
+
+        // 赋值当前日期数量
+        const targetRow = groupMap.get(groupVal)!
+        targetRow[dateKey] = numVal
+    })
+
+    const crossRows = Array.from(groupMap.values())
+
+    // 2. 生成底部合计行
+    const totalRow: CrossRow = {
+        [groupField]: "合计",
+        [nameField]: ""
+    }
+    colHeaders.forEach(date => {
+        let sum = 0
+        crossRows.forEach(r => sum += Number(r[date]))
+        totalRow[date] = sum
+    })
+    crossRows.push(totalRow)
+
+    return {
+        colHeaders,
+        crossRows
+    }
+}
+
+// ===================== 动态替换表格列配置 =====================
+function resetTableColumns(
+    colHeaders: string[],
+    colWidth: number
+): PrintTemplateJSON {
+    const newTpl = JSON.parse(originTemplate.value) as PrintTemplateJSON
+    const panel = newTpl.panels[0]
+
+    const tableEl = panel.printElements.find(el => el.printElementType.type === "table")
+    if (!tableEl) return newTpl
+
+    const tableOpts = tableEl.options as TablePrintOptions
+    //const totalColCount = 1 + colHeaders.length
+    //const singleColWidth = tableTotalWidth / totalColCount
+    tableOpts.width = 800.5
+    const newColumns: TableColumnOption[] = tableEl.options.columns[0]
+
+    // 固定首列
+    //   newColumns.push([{
+    //     width: singleColWidth,
+    //     title: rowTitle,
+    //     field: rowKey,
+    //     checked: true,
+    //     columnId: rowKey,
+    //     fixed: false,
+    //     rowspan: 1,
+    //     colspan: 1
+    //   }])
+
+    // 动态生成所有维度列
+    colHeaders.forEach(col => {
+        newColumns.push({
+            width: colWidth,
+            title: col,
+            field: col,
+            checked: true,
+            columnId: col,
+            fixed: false,
+            rowspan: 1,
+            colspan: 1,
+            align: "right"
+        })
+    })
+
+    tableOpts.columns[0] = newColumns
+    tableOpts.field = "data0"
+    // 合计行样式
+    tableOpts.css = `
+    tr:last-child td {
+      background:#eee;
+      font-weight:bold;
+    }
+  `
+
+    return newTpl
+}
+
+// ===================== 打印入口（仅需修改入参适配不同业务字段） =====================
+const crossReport = (sourceData: any, rowKey: string, rowTitle: string, colKey: string, valKey: string, colWidth: number) => {
+
+    // 生成交叉数据
+    const { colHeaders, crossRows } = getCrossData(sourceData.data0, colKey, rowKey, rowTitle, valKey)
+    const tableTotalWidth = 552
+    // 更新模板列
+    const newTemplate = resetTableColumns(colHeaders, colWidth)
+    console.log(newTemplate)
+    loadTemplate(JSON.stringify(newTemplate))
+    sourceData.data0 = crossRows
+    console.log(sourceData)
+    loadData(sourceData)
 }
 
 </script>
@@ -464,7 +777,7 @@ const getReportData = async (code: string, params: any) => {
     background: white;
     border-radius: 12px;
     margin-bottom: 20px;
-    overflow: hidden;
+    overflow-x: scroll;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 

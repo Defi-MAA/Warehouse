@@ -3,8 +3,8 @@
 
     <el-container>
         <el-header style="border-bottom: 1px solid #e4e7ed;background-color: #fff;padding-top: 13px;">
-            <el-button type="danger" :icon="Printer" @click="print">打印</el-button>
             <el-button type="primary" v-if="reportParams.length > 0" :icon="Search" @click="serData">查询</el-button>
+            <el-button type="danger" :icon="Printer" @click="print">打印</el-button>
             <el-button type="success" :icon="Document" @click="exportPDF">导出PDF</el-button>
             <!-- <el-dropdown>
                 <el-button type="primary" :icon="Document" style="margin-left: 10px;">
@@ -39,7 +39,7 @@
             </el-scrollbar>
         </el-main>
     </el-container>
-    <ConditionDialog ref="queryDialogRef" :list="reportParams" @confirm="confirmDlg" />
+    <ConditionDialog ref="queryDialogRef" :list.sync="reportParams" @confirm="confirmDlg" />
 
 </template>
 
@@ -421,11 +421,7 @@ const queryDialogRef = ref(ConditionDialog)
 const serData = async () => {
     queryDialogRef.value.dlgCondition = true
 }
-const confirmDlg = async (params: any) => {
-    // let paramsData = {};
-    // params.forEach(param => {
-    //     paramsData[param.Code] = param.CValue
-    // })
+const confirmDlg = async () => {
     let paramsData = await getParams()
     await getReportData(curCode.value, paramsData)
     preview()
