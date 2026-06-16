@@ -5,8 +5,7 @@
         <el-header style="border-bottom: 1px solid #e4e7ed;background-color: #fff;padding-top: 13px;">
             <el-button type="primary" v-if="reportParams.length > 0" :icon="Search" @click="serData">查询</el-button>
             <el-button type="danger" :icon="Printer" @click="print">打印</el-button>
-            <el-button type="success" :icon="Document" @click="exportPDF">导出PDF</el-button>
-            <!-- <el-dropdown>
+            <el-dropdown>
                 <el-button type="primary" :icon="Document" style="margin-left: 10px;">
                     导出<el-icon class="el-icon--right"><arrow-down /></el-icon>
                 </el-button>
@@ -16,7 +15,7 @@
                         <el-dropdown-item @click="exportExcel">导出Excel</el-dropdown-item>
                     </el-dropdown-menu>
                 </template>
-            </el-dropdown> -->
+            </el-dropdown>
         </el-header>
         <el-main style="padding: 0px;background-color: #fff;">
             <el-scrollbar :height="(winHeight - 270) + 'px'" >
@@ -30,10 +29,10 @@
 
                         </div>
                         <div v-else-if="previewLoading" class="preview-placeholder">
-                            <div class="loading-spinner"></div>
+                            <div class="loading-spinner" ></div>
                             <p>正在生成预览...</p>
                         </div>
-                        <div v-else  v-html="previewHtml" ></div>
+                        <div v-else  v-html="previewHtml" id="previewTable1" ></div>
                     </div>
                 </div>
             </el-scrollbar>
@@ -315,7 +314,7 @@ const exportPDF = () => {
         //     text: '导出中',
         //     background: 'rgba(0, 0, 0, 0.7)',
         // })
-        hiprintTemplate.value.toPdf(printData.value, '数据', { isDownload: true, type: type }).then((res) => {
+        hiprintTemplate.value.toPdf(printData.value, curName.value, { isDownload: true, type: type }).then((res) => {
             //loading.close()
             console.log('type:', type);
             console.log(res);
@@ -338,44 +337,35 @@ const exportExcel = () => {
             return
         }
 
-        console.log('导出 PDF...')
-        // type ''Blob,'arraybuffer','dataurl','bloburl','dataurlstring','pdfobjectnewwindow',,
-        let type = 'dataurl';
-        const loading = ElLoading.service({
-            lock: true,
-            text: '导出中',
-            background: 'rgba(0, 0, 0, 0.7)',
-        })
-        hiprintTemplate.value.toPdf(printData.value, 'data', { isDownload: false, type: type }).then( async (res) => {
-            loading.close()
-            //console.log('type:', type);
-            //console.log(res);
-            let result =  await request.post({ url: '/api/convert/pdf-to-excel',data: {base64Pdf:res} ,responseType: 'blob'})
-            //console.log(result);
-            // 处理返回的 blob 数据
-             downloadExcel(result.data, 'converted.xlsx')
-        });
+    const table = document.getElementById("previewTable1") as HTMLElement
+       htmlTableToExcel(table, curName.value)
 
 
     } catch (err: any) {
         ElMessage.error('导出PDF失败: ' + err.message)
     }
 }
+
+
 // 下载 Excel 文件
-const downloadExcel = (blob: Blob, fileName: string) => {
-  // 创建 blob URL
-  const url = window.URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = fileName
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  // 释放 blob URL
-  window.URL.revokeObjectURL(url)
+import * as XLSX from 'xlsx'
+
+/**
+ * html table 导出Excel
+ * @param tableDom 表格DOM对象
+ * @param fileName 文件名
+ */
+const htmlTableToExcel=(tableDom: HTMLElement, fileName = "报表") => {
+  // 转换table为工作表
+  const workbook = XLSX.utils.table_to_book(tableDom, { sheet: "Sheet1" })
+  // 导出文件
+  XLSX.writeFile(workbook, `${fileName}.xlsx`)
 }
 
+
 const curCode = ref('')
+const curName = ref('')
+
 const loadReportData = async (code: string, params: any) => {
     curCode.value = code
     try {
@@ -385,7 +375,8 @@ const loadReportData = async (code: string, params: any) => {
         }
         //hiprintTemplate.value.clear();
         let res = await request.post({ url: '/api/report/getBrpt', data: { Code: code } })
-        //hiprintTemplate.value.update({})     
+        //hiprintTemplate.value.update({})    
+        curName.value = res.data.Name
         nextTick(() => {
             loadTemplate(res.data.rptJson)
         })

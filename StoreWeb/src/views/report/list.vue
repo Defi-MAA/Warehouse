@@ -33,18 +33,18 @@
                             @click="serData">查询</el-button>
                         <el-button type="danger" :icon="Printer" @click="print">打印</el-button>
 
-                        <el-button type="success" :icon="Document" @click="exportPDF">导出PDF</el-button>
-                        <!-- <el-dropdown>
+                        
+                        <el-dropdown>
                             <el-button type="primary" :icon="Document" style="margin-left: 10px;">
                                 导出<el-icon class="el-icon--right"><arrow-down /></el-icon>
                             </el-button>
                             <template #dropdown>
                                 <el-dropdown-menu>
                                     <el-dropdown-item @click="exportPDF">导出PDF</el-dropdown-item>
-                                    <el-dropdown-item>导出Excel</el-dropdown-item>
+                                    <el-dropdown-item @click="exportExcel">导出Excel</el-dropdown-item>
                                 </el-dropdown-menu>
                             </template>
-                        </el-dropdown> -->
+                        </el-dropdown>
                     </el-header>
                     <el-main style="padding: 0px;background-color: #fff;">
                         <el-scrollbar :height="(winHeight - 170) + 'px'">
@@ -61,7 +61,7 @@
                                         <div class="loading-spinner"></div>
                                         <p>正在生成预览...</p>
                                     </div>
-                                    <div v-else v-html="previewHtml" @click="handleClick"></div>
+                                    <div v-else v-html="previewHtml" id="previewTable" @click="handleClick"></div>
                                 </div>
                             </div>
                         </el-scrollbar>
@@ -471,13 +471,15 @@ const exportPDF = () => {
         }
 
         console.log('导出 PDF...')
+        
+        //type ''Blob,'arraybuffer','dataurl','bloburl','dataurlstring','pdfobjectnewwindow',,
         let type = 'dataurlstring';
         // const loading = ElLoading.service({
         //     lock: true,
         //     text: '导出中',
         //     background: 'rgba(0, 0, 0, 0.7)',
         // })
-        hiprintTemplate.value.toPdf(printData.value, '数据', { isDownload: true, type: type }).then((res) => {
+        hiprintTemplate.value.toPdf(printData.value, curName.value, { isDownload: true, type: type }).then((res) => {
             //loading.close()
             console.log('type:', type);
             console.log(res);
@@ -488,6 +490,45 @@ const exportPDF = () => {
     }
 }
 
+// 导出Excel
+const exportExcel = () => {
+    try {
+        if (!hiprintTemplate.value) {
+            ElMessage.error('请先初始化')
+            return
+        }
+
+        if (!hasData.value) {
+            ElMessage.error('请先加载数据')
+            return
+        }
+
+       const table = document.getElementById("previewTable") as HTMLElement
+       htmlTableToExcel(table, curName.value)
+       
+    } catch (err: any) {
+        ElMessage.error('导出Excel失败: ' + err.message)
+    }
+}
+
+import * as XLSX from 'xlsx'
+
+/**
+ * html table 导出Excel
+ * @param tableDom 表格DOM对象
+ * @param fileName 文件名
+ */
+const htmlTableToExcel=(tableDom: HTMLElement, fileName = "报表") => {
+  // 转换table为工作表
+  const workbook = XLSX.utils.table_to_book(tableDom, { sheet: "Sheet1" })
+  // 导出文件
+  XLSX.writeFile(workbook, `${fileName}.xlsx`)
+}
+
+
+
+
+
 const queryDialogRef = ref(ConditionDialog)
 const serData = async () => {
     queryDialogRef.value.dlgCondition = true
@@ -497,6 +538,7 @@ const confirmDlg = async () => {
     await loadReportData(curCode.value, paramsData)
 }
 const curCode = ref('')
+const curName = ref('')
 const originTemplate = ref('')
 const loadReportData = async (code: string, params: any) => {
     try {
@@ -510,14 +552,8 @@ const loadReportData = async (code: string, params: any) => {
         originTemplate.value = res.data.rptJson
         nextTick(() => {
             loadTemplate(res.data.rptJson)
-        })
-        const loading = ElLoading.service({
-            lock: true,
-            text: 'Loading',
-            background: 'rgba(0, 0, 0, 0.7)',
-        })
+        })       
         await getReportData(code, params)
-        loading.close()
         console.log('报告加载成功')
     } catch (err: any) {
         ElMessage.error('报告加载失败: ' + err.message)
@@ -525,6 +561,7 @@ const loadReportData = async (code: string, params: any) => {
 }
 const showReport = async (item) => {
     curCode.value = item.code
+    curName.value = item.name
     await getReportParams(item.code)
     await loadReportData(item.code, {})
 }

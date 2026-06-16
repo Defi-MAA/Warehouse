@@ -38,6 +38,8 @@ import './permission'
 
 import ElementPlus from 'element-plus'
 
+import { eventBus } from './utils/eventBus'
+
 // 引入打印插件
 import { hiPrintPlugin } from 'vue-plugin-hiprint'
 
@@ -65,6 +67,8 @@ const setupAll = async () => {
 
 
   app.use(ElementPlus)
+  // 挂载到全局属性
+  app.config.globalProperties.$bus = eventBus
   // 注册插件，第二个参数是给插件起的别名（可选），之后可以通过 this.$hiprint 访问
   app.use(hiPrintPlugin, '$hiprint')
  

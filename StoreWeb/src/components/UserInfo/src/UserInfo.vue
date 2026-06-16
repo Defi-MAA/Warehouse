@@ -8,7 +8,7 @@ import LockPage from './components/LockPage.vue'
 import { useLockStore } from '@/store/modules/lock'
 import { useUserStore } from '@/store/modules/user'
 import { useRouter } from 'vue-router'
-
+import { eventBus } from '@/utils/eventBus'
 const { push } = useRouter()
 
 const userStore = useUserStore()
@@ -35,7 +35,11 @@ const lockScreen = () => {
 }
 
 const toDocument = () => {
-  window.open('https://element-plus-admin-doc.cn/')
+  window.open('')
+}
+
+const setTheme = () => {
+  eventBus.emit('openSetting')
 }
 
 const toPage = (path: string) => {
@@ -69,8 +73,12 @@ const toPage = (path: string) => {
           <div @click="lockScreen">{{ t('lock.lockScreen') }}</div>
         </ElDropdownItem> -->
         <ElDropdownItem>
+          <div @click="setTheme" >布局主题</div>
+        </ElDropdownItem>
+        <ElDropdownItem>
           <div @click="loginOut">{{ t('common.loginOut') }}</div>
         </ElDropdownItem>
+        
       </ElDropdownMenu>
     </template>
   </ElDropdown>
