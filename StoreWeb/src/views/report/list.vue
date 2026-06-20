@@ -3,11 +3,11 @@
         <el-splitter style="display: flex;" v-if="splitterReady">
             <el-splitter-panel collapsible :max="400" :size="250" style="background-color: #fff;width: 250px;">
                 <el-scrollbar :height="(winHeight - 110) + 'px'" class="menuback">
-                    <el-menu  ref="menuRef" active-text-color="var(--left-menu-text-active-color)" 
+                    <el-menu ref="menuRef" active-text-color="var(--left-menu-text-active-color)"
                         active-background-color="var(--left-menu-text-active-color)"
                         background-color="var(--left-menu-bg-color)" default-active="2"
                         text-color="var(--left-menu-text-color)">
-                        <el-sub-menu :index="'' + (index + 1)" v-for="(item, index) in reportType" >
+                        <el-sub-menu :index="'' + (index + 1)" v-for="(item, index) in reportType">
                             <template #title>
                                 <el-icon>
                                     <Notebook />
@@ -33,7 +33,7 @@
                             @click="serData">查询</el-button>
                         <el-button type="danger" :icon="Printer" @click="print">打印</el-button>
 
-                        
+
                         <el-dropdown>
                             <el-button type="primary" :icon="Document" style="margin-left: 10px;">
                                 导出<el-icon class="el-icon--right"><arrow-down /></el-icon>
@@ -41,7 +41,7 @@
                             <template #dropdown>
                                 <el-dropdown-menu>
                                     <el-dropdown-item @click="exportPDF">导出PDF</el-dropdown-item>
-                                    <el-dropdown-item @click="exportExcel">导出Excel</el-dropdown-item>
+                                    <el-dropdown-item @click="exportExcel" v-if="!isChart">导出Excel</el-dropdown-item>
                                 </el-dropdown-menu>
                             </template>
                         </el-dropdown>
@@ -75,13 +75,14 @@
     <Dialog v-model="dlgReport" width="65%" maxHeight="500px" :title="rptTitle">
         <Report1 ref="myrpt0"></Report1>
     </Dialog>
-
+    <div ref="chartRef" v-show="false" style="width: 600px; height: 400px;"></div>
 
 </template>
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { hiprint } from 'vue-plugin-hiprint'
+import * as echarts from 'echarts'
 import { Notebook, Printer, Search, Document, ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import ConditionDialog from '@/views/dialog/condition.vue'
@@ -278,12 +279,12 @@ const loadReport = async () => {
     reportData.value = res.data
     res = await request.post({ url: '/api/report/getCategory', data: { category: 0 } })
     reportType.value = res.data
-    if(reportType.value.length > 0) {
+    if (reportType.value.length > 0) {
         nextTick(() => {
             menuRef.value?.updateActiveIndex('1')
         })
     }
-    
+
 }
 
 
@@ -471,7 +472,7 @@ const exportPDF = () => {
         }
 
         console.log('导出 PDF...')
-        
+
         //type ''Blob,'arraybuffer','dataurl','bloburl','dataurlstring','pdfobjectnewwindow',,
         let type = 'dataurlstring';
         // const loading = ElLoading.service({
@@ -503,9 +504,9 @@ const exportExcel = () => {
             return
         }
 
-       const table = document.getElementById("previewTable") as HTMLElement
-       htmlTableToExcel(table, curName.value)
-       
+        const table = document.getElementById("previewTable") as HTMLElement
+        htmlTableToExcel(table, curName.value)
+
     } catch (err: any) {
         ElMessage.error('导出Excel失败: ' + err.message)
     }
@@ -518,11 +519,11 @@ import * as XLSX from 'xlsx'
  * @param tableDom 表格DOM对象
  * @param fileName 文件名
  */
-const htmlTableToExcel=(tableDom: HTMLElement, fileName = "报表") => {
-  // 转换table为工作表
-  const workbook = XLSX.utils.table_to_book(tableDom, { sheet: "Sheet1" })
-  // 导出文件
-  XLSX.writeFile(workbook, `${fileName}.xlsx`)
+const htmlTableToExcel = (tableDom: HTMLElement, fileName = "报表") => {
+    // 转换table为工作表
+    const workbook = XLSX.utils.table_to_book(tableDom, { sheet: "Sheet1" })
+    // 导出文件
+    XLSX.writeFile(workbook, `${fileName}.xlsx`)
 }
 
 
@@ -552,7 +553,7 @@ const loadReportData = async (code: string, params: any) => {
         originTemplate.value = res.data.rptJson
         nextTick(() => {
             loadTemplate(res.data.rptJson)
-        })       
+        })
         await getReportData(code, params)
         console.log('报告加载成功')
     } catch (err: any) {
@@ -582,6 +583,7 @@ const getParams = async () => {
     })
     return params
 }
+const isChart = ref(false)
 const getReportData = async (code: string, params: any) => {
     try {
         let res = await request.post({ url: '/api/report/getReportData', data: { method: code, params: params } })
@@ -592,10 +594,32 @@ const getReportData = async (code: string, params: any) => {
         });
 
         console.log(rptData)
+        isChart.value = false;
         if (rptData.CrossReport) {
+            // 交叉表
             crossReport(rptData, rptData.CrossKey, rptData.CrossCol, rptData.CrossTitle, rptData.CrossVal, rptData.ColWidth)
             preview()
-        } else {
+        }
+        else if (rptData.ChartReport) {
+            isChart.value = true;
+            // 图表
+            initChart(rptData);
+            setTimeout(() => {
+                const imgBase64 = chartIns.getDataURL({
+                    pixelRatio: 3,
+                    backgroundColor: '#fff'
+                })
+                // 传给hiprint模板数据
+                const printData = {
+                    lineImg: imgBase64
+                }
+                loadData(printData)
+                preview()
+            }, 300);
+
+
+        }
+        else {
             loadData(rptData)
             preview()
         }
@@ -797,7 +821,109 @@ function resetTableColumns(
     return newTpl
 }
 
-// ===================== 打印入口（仅需修改入参适配不同业务字段） =====================
+
+// 定义数据类型，替换 any
+interface ChartRow {
+    [key: string]: string | number;
+}
+interface PrintData {
+    data0: ChartRow[];
+    legendName: string;
+    xAxisName: string;
+    ChartType: 'bar' | 'line';
+    ChartValue: string;
+}
+
+// 外部变量建议ref存放，这里仅示例
+let chartIns: echarts.ECharts | null = null;
+const chartRef = ref(null);
+
+const initChart = (printData: PrintData) => {
+    // 1. 前置校验，防止字段为空报错
+    if (!printData?.data0?.length || !chartRef.value) return;
+    const list: ChartRow[] = printData.data0;
+    const { legendName, xAxisName, ChartType, ChartValue } = printData;
+
+    // 2. 销毁旧图表实例，避免重复初始化
+    if (chartIns) {
+        chartIns.dispose();
+        chartIns = null;
+    }
+    chartIns = echarts.init(chartRef.value);
+
+    // 3. 有序去重（保留原始出现顺序，解决坐标轴错位）
+    const getDistinctArr = <T>(arr: T[]) => {
+        const set = new Set<T>();
+        return arr.filter(item => {
+            if (set.has(item)) return false;
+            set.add(item);
+            return true;
+        });
+    };
+    const rawLegend = list.map(item => item[legendName] as string);
+    const rawXAxis = list.map(item => item[xAxisName] as string);
+    const legendData = getDistinctArr(rawLegend);
+    const xAxisData = getDistinctArr(rawXAxis);
+
+    // 4. 构建映射表，优化查询性能，避免双层findIndex
+    const dataMap = new Map<string, number>();
+    list.forEach(item => {
+        const key = `${item[xAxisName]}|${item[legendName]}`;
+        dataMap.set(key, Number(item[ChartValue]) || 0);
+    });
+
+    // 5. 组装series，无数据填充0，保证数组长度和xAxis完全匹配
+    const seriesData = legendData.map(legend => {
+        const data = xAxisData.map(x => {
+            const key = `${x}|${legend}`;
+            return dataMap.get(key) ?? 0; // 无数据补0，不会缺项
+        });
+        return {
+            name: legend,
+            barWidth: 28,
+            type: ChartType,
+            // 柱子顶部文字
+            label: {
+                show: true,        // 开启显示数值
+                position: 'top',   // 位置：top顶部 / inside内部 / bottom底部
+                fontSize: 10, // 不小于12
+                color: '#000000', // 纯黑，杜绝浅灰
+                fontWeight: 'bold', // 加粗，提升对比度
+                textShadowColor: '#fff', // 加白色描边/阴影，隔绝柱子底色
+                textShadowBlur: 2,
+                textShadowOffsetX: 0,
+                textShadowOffsetY: 0,
+                formatter: '{c}'   // {c} = 当前数值，可自定义拼接文字
+            },
+            data
+        };
+    });
+
+    console.log(seriesData)
+
+    // 6. 完整option，补充tooltip、自适应
+    const option = {
+        tooltip: { trigger: 'axis' }, // 悬浮提示必备
+        legend: { data: legendData },
+        xAxis: {
+            type: 'category',
+            data: xAxisData
+        },
+        yAxis: { type: 'value' },
+        series: seriesData
+    };
+    chartIns.setOption(option);
+
+    // 窗口大小自适应
+    //const resizeHandler = () => chartIns?.resize();
+    //window.addEventListener('resize', resizeHandler);
+    // 组件销毁时移除监听（补充在onUnmounted）
+};
+
+
+
+
+// ===================== （仅需修改入参适配不同业务字段） =====================
 const crossReport = (sourceData: any, rowKey: string, rowTitle: string, colKey: string, valKey: string, colWidth: number) => {
 
     // 生成交叉数据
@@ -920,7 +1046,8 @@ const crossReport = (sourceData: any, rowKey: string, rowTitle: string, colKey: 
     padding: 10px 12px;
     border: 1px solid #e2e8f0;
 }
-:deep  .el-menu .el-menu-item.is-active {
+
+:deep .el-menu .el-menu-item.is-active {
     color: var(--left-menu-text-active-color) !important;
     background-color: var(--left-menu-bg-active-color) !important;
 }

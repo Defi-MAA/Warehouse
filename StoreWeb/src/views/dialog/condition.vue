@@ -21,7 +21,7 @@
         <template #default="{ row }">
           <!-- 年月选择器 -->
           <template v-if="row.DataType === 2 && row.SelCode === 'yyyy-MM'">
-            <el-date-picker v-model="row.CValue" type="month" value-format="yyyy-MM" placeholder="选择日期"
+            <el-date-picker v-model="row.CValue" type="month" value-format="YYYY-MM" placeholder="选择日期"
               style="width: 175px" />
           </template>
 
@@ -44,13 +44,13 @@
 
           <!-- 用户选择器 -->
           <template v-else-if="row.DataType === 0 && row.SelCode === 'uUser'">
-            <el-select clearable v-model="row.CValue" placeholder="请选择" filterable style="width: 175px">
+            <el-select filterable clearable v-model="row.CValue" placeholder="请选择"  style="width: 175px">
               <el-option v-for="item in listData.usrs"  :label="item.name" :value="item.code" />
             </el-select>
           </template>
 
           <template v-else-if="row.DataType === 0 && row.SelCode === 'ItemCode'">
-            <el-select clearable v-model="row.CValue" placeholder="请选择" filterable style="width: 175px">
+            <el-select filterable clearable v-model="row.CValue" placeholder="请选择"  style="width: 175px">
               <el-option v-for="item in listData.items"  :label="item.name" :value="item.code" />
             </el-select>
           </template>
@@ -58,19 +58,19 @@
 
           <!-- 状态选择器 -->
           <template v-else-if="row.DataType === 0 && row.SelCode === 'wrhsstat'">
-            <el-select clearable v-model="row.CValue" placeholder="请选择" style="width: 175px">
+            <el-select filterable clearable v-model="row.CValue" placeholder="请选择" style="width: 175px">
               <el-option v-for="item in wrhsstats" :label="item.label" :value="item.value" />
 
             </el-select>
           </template>
           <template v-else-if="row.DataType === 0 && row.SelCode === 'itemclass'">
-            <el-select clearable v-model="row.CValue" placeholder="请选择" style="width: 175px">
+            <el-select filterable clearable v-model="row.CValue" placeholder="请选择" style="width: 175px">
               <el-option v-for="item in listData.itemclass" :label="item.name" :value="item.code" />
 
             </el-select>
           </template>
           <template v-else-if="row.DataType === 0 && row.SelCode === 'itemgrade'">
-            <el-select clearable v-model="row.CValue" placeholder="请选择" style="width: 175px">
+            <el-select filterable clearable v-model="row.CValue" placeholder="请选择" style="width: 175px">
               <el-option v-for="item in levels" :label="item.label" :value="item.value+''" />
 
             </el-select>
@@ -78,35 +78,42 @@
           
 
           <template v-else-if="row.DataType === 0 && row.Code === 'Level'">
-            <el-select clearable v-model="row.CValue" placeholder="请选择" filterable style="width: 175px">
+            <el-select filterable clearable v-model="row.CValue" placeholder="请选择"  style="width: 175px">
               <el-option v-for="item in listData.levels"  :label="item.name" :value="item.code" />
             </el-select>
           </template>
 
           <template v-else-if="row.DataType === 0 && row.Code === 'Pos'">
-            <el-select clearable v-model="row.CValue" placeholder="请选择" filterable style="width: 175px">
+            <el-select  filterable clearable v-model="row.CValue" placeholder="请选择"  style="width: 175px">
               <el-option v-for="item in listData.storesdepts"  :label="item.name" :value="item.code" />
             </el-select>
           </template>
 
           
           <template v-else-if="row.DataType === 0 && row.Code === 'Dept'">
-            <el-select clearable v-model="row.CValue" placeholder="请选择" style="width: 175px">
+            <el-select filterable clearable v-model="row.CValue" placeholder="请选择" style="width: 175px">
               <el-option v-for="item in listData.depts" :label="item.name" :value="item.code" />
             </el-select>
           </template>
 
           <template v-else-if="row.DataType === 0 && row.Code === 'Cust'">
-            <el-select clearable v-model="row.CValue" placeholder="请选择" style="width: 175px">
+            <el-select filterable clearable v-model="row.CValue" placeholder="请选择" style="width: 175px">
               <el-option v-for="item in listData.custs" :label="item.name" :value="item.code" />
             </el-select>
           </template>
 
           <template v-else-if="row.DataType === 0 && row.Code === 'Wrhs'">
-            <el-select clearable v-model="row.CValue" placeholder="请选择" style="width: 175px">
+            <el-select filterable clearable v-model="row.CValue" placeholder="请选择" style="width: 175px">
               <el-option v-for="item in listData.storesdepts" :label="item.name" :value="item.code" />
             </el-select>
           </template>
+
+          <template v-else-if="row.DataType === 0 && row.Code === 'Vndr'">
+            <el-select filterable clearable v-model="row.CValue" placeholder="请选择" style="width: 175px">
+              <el-option v-for="item in listData.custs" :label="item.name" :value="item.code" />
+            </el-select>
+          </template>
+          
 
           
 

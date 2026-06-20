@@ -33,7 +33,7 @@
           </template>
 
         </el-table-column>
-        <el-table-column prop="tdate" label="事务日期" sortable="custom" show-overflow-tooltip width="180px">
+        <el-table-column prop="tdate" label="事务日期" sortable="custom" show-overflow-tooltip width="120px">
         </el-table-column>
         <el-table-column prop="tcode" label="事务编号" sortable="custom" show-overflow-tooltip width="130px">
         </el-table-column>
@@ -121,7 +121,7 @@
             <div style="display:inline-block;">
               <label class="radio-label" style="padding-left:10px;">日期</label>
 
-              <el-date-picker style="width: 190px; " v-model="form.tdate" type="datetime"
+              <el-date-picker style="width: 190px; " v-model="form.tdate" type="date"
                 value-format="YYYY-MM-DD hh:mm:ss" placeholder="选择日期">
               </el-date-picker>
             </div>

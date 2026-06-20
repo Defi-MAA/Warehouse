@@ -177,12 +177,12 @@ const openView = (src) => {
 
 
 interface formData {
-	tclass: '',
-	code: '',
-	flag: '',
-	name: '',
-	notes: '',
-	value: '',
+	tclass: string,
+	code: string,
+	flag: boolean,
+	name: string,
+	notes: string,
+	value: string
 
 }
 
@@ -237,7 +237,7 @@ const handleSelectionChange = (val: formData[]) => {
 const form = ref<formData>({
 	tclass: '',
 	code: '',
-	flag: '',
+	flag: false,
 	name: '',
 	notes: '',
 	value: '',
@@ -346,7 +346,7 @@ const AddAction = async () => {
 	form.value = {
 		tclass: '',
 		code: '',
-		flag: '',
+		flag: false,
 		name: '',
 		notes: '',
 		value: '',
