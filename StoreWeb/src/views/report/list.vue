@@ -61,7 +61,7 @@
                                         <div class="loading-spinner"></div>
                                         <p>正在生成预览...</p>
                                     </div>
-                                    <div v-else v-html="previewHtml" id="previewTable" @click="handleClick"></div>
+                                    <div  v-else v-html="previewHtml" id="previewTable"  @click="handleClick"></div>
                                 </div>
                             </div>
                         </el-scrollbar>
@@ -597,7 +597,7 @@ const getReportData = async (code: string, params: any) => {
         isChart.value = false;
         if (rptData.CrossReport) {
             // 交叉表
-            crossReport(rptData, rptData.CrossKey, rptData.CrossCol, rptData.CrossTitle, rptData.CrossVal, rptData.ColWidth)
+            crossReport(rptData, rptData.CrossRows, rptData.CrossColumns, rptData.CrossMeasures, rptData.CrossMeaNames, rptData.ColWidth)
             preview()
         }
         else if (rptData.ChartReport) {
@@ -634,12 +634,7 @@ const getReportData = async (code: string, params: any) => {
 
 
 
-/** 交叉表行（动态key） */
-/** 任意明细行，字段完全动态 */
-type SourceItem = Record<string, string | number>
 
-/** 交叉表结果行，key 动态 */
-type CrossRow = Record<string, string | number>
 
 /** 表格单列配置 */
 interface TableColumnOption {
@@ -704,69 +699,132 @@ interface PrintTemplateJSON {
 
 
 
-/**
- * 明细转交叉表
- * @param list 原始明细数组
- * @param groupField 分组字段 item
- * @param nameField 名称字段 itemname
- * @param dateField 日期字段 tdatea
- * @param numField 数值字段 quantity
- */
-function getCrossData(
+// ========== 类型定义 ==========
+interface SourceItem {
+    [key: string]: any;
+}
+
+interface PivotConfig {
+    rows: string[];          // 行维度字段列表（如 ['region', 'city', 'product']）
+    columns: string[];       // 列维度字段列表（如 ['year', 'quarter']）
+    measures: string[];      // 数值字段列表（如 ['sales', 'profit']）
+    aggregator?: (values: number[]) => number; // 聚合函数，默认求和
+    showGrandTotal?: boolean; // 是否显示总计行
+}
+
+interface CrossRow {
+    [key: string]: any;
+}
+
+interface PivotResult {
+    colHeaders: string[];
+    crossRows: CrossRow[];
+}
+
+// ========== 工具函数 ==========
+// 默认求和聚合
+function sum(values: number[]): number {
+    return values.reduce((a, b) => a + b, 0);
+}
+
+// 获取所有列组合（去重），返回字符串键数组（用 '||' 拼接）
+function getUniqueCombinations(list: SourceItem[], colFields: string[]): string[] {
+    const set = new Set<string>();
+    list.forEach(item => {
+        const key = colFields.map(f => String(item[f] ?? '')).join('||');
+        set.add(key);
+    });
+    return Array.from(set);
+}
+
+
+
+// 格式化列头（将组合键转换为可读字符串）
+function formatColHeader(comboKey: string, colFields: string[]): string {
+    const parts = comboKey.split('||');
+    return parts.join('-'); // 例如 ['2024','Q1'] → '2024-Q1'
+}
+
+// ========== 核心透视函数 ==========
+function getPivotData(
     list: SourceItem[],
-    groupField: string,
-    nameField: string,
-    dateField: string,
-    numField: string
-): { colHeaders: string[]; crossRows: CrossRow[] } {
-    // 1. 收集所有日期列
-    const colHeaders = [...new Set(list.map(item => String(item[dateField])))]
-    const groupMap = new Map<string, CrossRow>()
+    config: PivotConfig
+): PivotResult {
+    const {
+        rows,
+        columns,
+        measures,
+        aggregator = sum,
+        showGrandTotal = true
+    } = config;
 
-    list.forEach(row => {
-        const groupVal = String(row[groupField])
-        const nameVal = String(row[nameField])
-        const dateKey = String(row[dateField])
-        const numVal = Number(row[numField]) || 0
+    // 1. 提取所有列组合（扁平化）
+    const colCombos = getUniqueCombinations(list, columns);
+    const colHeaders = colCombos.map(combo => formatColHeader(combo, columns));
 
-        // 不存在该分组则初始化：保留item、itemname，所有日期默认0
-        if (!groupMap.has(groupVal)) {
-            const initRow: CrossRow = {
-                [groupField]: groupVal,
-                [nameField]: nameVal
-            }
-            colHeaders.forEach(date => initRow[date] = 0)
-            groupMap.set(groupVal, initRow)
+    // 2. 按行维度分组
+    const rowGroups = new Map<string, CrossRow>();
+
+    list.forEach(item => {
+        // 行键：由 rows 字段值拼接
+        const rowKey = rows.map(f => String(item[f] ?? '')).join('||');
+        // 列键：由 columns 字段值拼接
+        const colKey = columns.map(f => String(item[f] ?? '')).join('||');
+
+        if (!rowGroups.has(rowKey)) {
+            // 初始化行，包含所有行维度字段
+            const initRow: CrossRow = {};
+            rows.forEach(f => initRow[f] = item[f]);
+            // 初始化所有指标 × 所有列组合为 0
+            measures.forEach(measure => {
+                colHeaders.forEach(col => {
+                    initRow[`${measure}_${col}`] = 0;
+                });
+            });
+            rowGroups.set(rowKey, initRow);
         }
 
-        // 赋值当前日期数量
-        const targetRow = groupMap.get(groupVal)!
-        targetRow[dateKey] = numVal
-    })
+        const targetRow = rowGroups.get(rowKey)!;
+        // 对每个指标累加（按列组合定位）
+        measures.forEach(measure => {
+            const val = Number(item[measure]) || 0;
+            // 找到当前行数据对应的列索引（根据 colKey）
+            const colIndex = colCombos.indexOf(colKey);
+            if (colIndex === -1) return; // 理论上不会发生
+            const colHeader = colHeaders[colIndex];
+            const key = `${measure}_${colHeader}`;
+            targetRow[key] = (targetRow[key] || 0) + val;
+        });
+    });
 
-    const crossRows = Array.from(groupMap.values())
+    const crossRows = Array.from(rowGroups.values());
 
-    // 2. 生成底部合计行
-    const totalRow: CrossRow = {
-        [groupField]: "合计",
-        [nameField]: ""
+    // 3. 总计行（可选）
+    if (showGrandTotal) {
+        const totalRow: CrossRow = {};
+        //rows.forEach(f => totalRow[f] = '合计');
+        rows.forEach((f, index) => {
+            totalRow[f] = index === 0 ? '合计' : '';
+        });
+        measures.forEach(measure => {
+            colHeaders.forEach(col => {
+                const key = `${measure}_${col}`;
+                let total = 0;
+                crossRows.forEach(r => total += Number(r[key] || 0));
+                totalRow[key] = total;
+            });
+        });
+        crossRows.push(totalRow);
     }
-    colHeaders.forEach(date => {
-        let sum = 0
-        crossRows.forEach(r => sum += Number(r[date]))
-        totalRow[date] = sum
-    })
-    crossRows.push(totalRow)
 
-    return {
-        colHeaders,
-        crossRows
-    }
+    return { colHeaders, crossRows };
 }
 
 // ===================== 动态替换表格列配置 =====================
 function resetTableColumns(
     colHeaders: string[],
+    CrossMeasures: string[],
+    CrossMeaNames: string[],
     colWidth: number
 ): PrintTemplateJSON {
     const newTpl = JSON.parse(originTemplate.value) as PrintTemplateJSON
@@ -781,30 +839,20 @@ function resetTableColumns(
     tableOpts.width = 800.5
     const newColumns: TableColumnOption[] = tableEl.options.columns[0]
 
-    // 固定首列
-    //   newColumns.push([{
-    //     width: singleColWidth,
-    //     title: rowTitle,
-    //     field: rowKey,
-    //     checked: true,
-    //     columnId: rowKey,
-    //     fixed: false,
-    //     rowspan: 1,
-    //     colspan: 1
-    //   }])
-
     // 动态生成所有维度列
     colHeaders.forEach(col => {
-        newColumns.push({
-            width: colWidth,
-            title: col,
-            field: col,
-            checked: true,
-            columnId: col,
-            fixed: false,
-            rowspan: 1,
-            colspan: 1,
-            align: "right"
+        CrossMeasures.forEach(measure => {
+            newColumns.push({
+                width: colWidth,
+                title: col + CrossMeaNames[CrossMeasures.indexOf(measure)],
+                field: measure + `_${col}`,
+                checked: true,
+                columnId: col,
+                fixed: false,
+                rowspan: 1,
+                colspan: 1,
+                align: "right"
+            })
         })
     })
 
@@ -924,17 +972,22 @@ const initChart = (printData: PrintData) => {
 
 
 // ===================== （仅需修改入参适配不同业务字段） =====================
-const crossReport = (sourceData: any, rowKey: string, rowTitle: string, colKey: string, valKey: string, colWidth: number) => {
+const crossReport = (sourceData: any, crossRows: string, crossColumns: string, crossMeasures: string, crossMeaNames: string, colWidth: number) => {
 
-    // 生成交叉数据
-    const { colHeaders, crossRows } = getCrossData(sourceData.data0, colKey, rowKey, rowTitle, valKey)
-    const tableTotalWidth = 552
+    const config: PivotConfig = {
+        rows: crossRows.split(','),   // 三级行维度
+        columns: crossColumns.split(','),          // 两级列维度
+        measures: crossMeasures.split(','),         // 两个指标
+        showGrandTotal: true
+    };
+
+    const result = getPivotData(sourceData.data0, config);
     // 更新模板列
-    const newTemplate = resetTableColumns(colHeaders, colWidth)
-    console.log(newTemplate)
+    const newTemplate = resetTableColumns(result.colHeaders, crossMeasures.split(','), crossMeaNames.split(','), colWidth)
+   
+    
     loadTemplate(JSON.stringify(newTemplate))
-    sourceData.data0 = crossRows
-    console.log(sourceData)
+    sourceData.data0 = result.crossRows
     loadData(sourceData)
 }
 

@@ -129,17 +129,17 @@
 
 
                         <div style="display:inline-block;">
-                            <label class="radio-label" style="padding-left:10px;">仓库/部门</label>
+                            <label class="radio-label" style="padding-left:10px;">仓库</label>
                             <el-select style="width: 120px; " v-model="form.wrhs" placeholder="请选择">
-                                <el-option v-for="(item, index) in storelista" :key="index" :label="item.name"
+                                <el-option v-for="(item, index) in storelist" :key="index" :label="item.name"
                                     :value="item.code">
                                 </el-option>
                             </el-select>
                         </div>
                         <div style="display:inline-block;">
-                            <label class="radio-label" style="padding-left:10px;">领料仓库/部门</label>
+                            <label class="radio-label" style="padding-left:10px;">领料部门</label>
                             <el-select style="width: 120px; " v-model="form.dept" placeholder="请选择">
-                                <el-option v-for="(item, index) in storelista" :key="index" :label="item.name"
+                                <el-option v-for="(item, index) in deptlist" :key="index" :label="item.name"
                                     :value="item.code">
                                 </el-option>
                             </el-select>

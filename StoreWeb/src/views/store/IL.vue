@@ -129,7 +129,7 @@
 
 
                         <div style="display:inline-block;">
-                            <label class="radio-label" style="padding-left:10px;">仓库/部门</label>
+                            <label class="radio-label" style="padding-left:10px;">仓库</label>
                             <el-select style="width: 120px; " v-model="form.wrhs" placeholder="请选择">
                                 <el-option v-for="(item, index) in storelist" :key="index" :label="item.name"
                                     :value="item.code">
@@ -642,6 +642,8 @@ const custlist = ref<OptionItem[]>([])
 const userlist = ref<OptionItem[]>([])
 const deptlist = ref<OptionItem[]>([])
 const storelist = ref<OptionItem[]>([])
+const storelista = ref<OptionItem[]>([])
+
 const settlelist = ref<OptionItem[]>([])
 const items = ref<ItemData[]>([])
 const numinfo = ref<NumInfo>({})
@@ -673,6 +675,7 @@ const initData = () => {
         userlist.value = res.data.usrs
         deptlist.value = res.data.depts
         storelist.value = res.data.stores
+        storelista.value = res.data.storesdepts
         settlelist.value = res.data.settles
     }).catch(error => { })
 

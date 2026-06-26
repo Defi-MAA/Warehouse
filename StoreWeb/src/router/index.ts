@@ -207,7 +207,15 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
         component: () => import('@/views/pd/IC.vue'),
         name: 'pdic',
         meta: {
-          title: '盘点单'
+          title: '仓库盘点单'
+        }
+      },
+      {
+        path: 'pdds',
+        component: () => import('@/views/pd/DS.vue'),
+        name: 'pdds',
+        meta: {
+          title: '部门盘点单'
         }
       },
       {
@@ -226,14 +234,7 @@ export const asyncRouterMap: AppRouteRecordRaw[] = [
           title: '盘亏单'
         }
       },
-      {
-        path: 'pdds',
-        component: () => import('@/views/pd/DS.vue'),
-        name: 'pdds',
-        meta: {
-          title: '盘存单'
-        }
-      },
+     
       {
         path: 'pdstart',
         component: () => import('@/views/pd/start.vue'),

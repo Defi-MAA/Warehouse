@@ -10,7 +10,6 @@
           <div class="mb-10px" style="margin-top: 10px;">
               <BaseButton type="primary" :icon="Plus" @click="add">增加</BaseButton>
               <BaseButton type="success" :icon="Check" @click="checkTrans">成批审核</BaseButton>
-              <BaseButton type="danger" :icon="Check" @click="passTrans">成批过账</BaseButton>
               <BaseButton type="warning" :icon="Document" @click="handleDownload">导出</BaseButton>
           </div>
 
@@ -18,24 +17,18 @@
           <el-table v-loading="listLoading" :data="list" @sort-change="sort" border fit highlight-current-row
               style="width: 100%" :height="tableHeight - 50" @selection-change="setCheck" @row-dblclick="showEdit"
               id="out-table" :header-cell-style="{ color: '#000000' }" ref="tableRef" :default-sort="{
-    prop: 'tcode',
-    order: 'descending'
-  }" >
+                  prop: 'tcode',
+                  order: 'descending'
+              }">
               <el-table-column type="selection" width="35" />
-              <el-table-column prop="status" label="过账" width="60px">
-                  <template #default="{ row }">
-                      {{ row.status == 1 ? '是' : '否' }}
-                  </template>
-
-              </el-table-column>
+            
               <el-table-column prop="tdate" label="事务日期" sortable="custom" show-overflow-tooltip width="120px">
               </el-table-column>
               <el-table-column prop="tcode" label="事务编号" sortable="custom" show-overflow-tooltip width="130px">
               </el-table-column>
               <el-table-column prop="TypeName" label="事务类别" width="100px">
               </el-table-column>
-              <el-table-column prop="custname" label="供应商" sortable="custom" width="100px">
-              </el-table-column>
+             
               <el-table-column prop="wrname" label="仓库" sortable="custom" width="100px">
               </el-table-column>
               <el-table-column prop="amt" label="金额" sortable="custom" width="80px">
@@ -73,14 +66,13 @@
                           </el-button>
                           <template #dropdown>
                               <el-dropdown-menu>
-                                  <el-dropdown-item @click="doCopy(row)">复制</el-dropdown-item>
+                               
                                   <el-dropdown-item @click="doPrint(row)">打印</el-dropdown-item>
                                   <el-dropdown-item @click="doCheck(row)" v-if="isNull(row.man2)" divided>审核
                                   </el-dropdown-item>
                                   <el-dropdown-item @click="doUnCheck(row)" v-if="!isNull(row.man2)">取消审核
                                   </el-dropdown-item>
-                                  <el-dropdown-item @click="doPass(row)" divided
-                                      v-if="row.status == '0'">过账</el-dropdown-item>
+                                 
 
                                   <el-dropdown-item v-if="row.ttype == 'PQ' || row.ttype == 'PM'"
                                       @click="doUpdate(row)" divided>单价更新</el-dropdown-item>
@@ -116,27 +108,29 @@
                               value-format="YYYY-MM-DD" placeholder="选择日期">
                           </el-date-picker>
                       </div>
-                    
+
+
 
 
                       <div style="display:inline-block;">
-                          <label class="radio-label" style="padding-left:10px;">对应单号</label>
-                          <el-input v-model="form.refno" placeholder="" style="width: 120px; " />
+                          <label class="radio-label" style="padding-left:10px;">价格日期</label>
+                          <el-date-picker style="width: 140px; " v-model="form.pricedate" type="date"
+                              value-format="YYYY-MM-DD" placeholder="选择日期">
+                          </el-date-picker>
                       </div>
-                    
                   </el-row>
                   <el-row>
 
-                      
+
                       <div style="display:inline-block;">
                           <label class="radio-label" style="padding-left:10px;">部门</label>
-                          <el-select style="width: 120px; " v-model="form.dept" placeholder="请选择">
-                              <el-option v-for="(item, index) in deptlist" :key="index" :label="item.name"
+                          <el-select style="width: 120px; " v-model="form.dept" @change="changeStore"
+                              placeholder="请选择">
+                              <el-option v-for="(item, index) in storelist" :key="index" :label="item.name"
                                   :value="item.code">
                               </el-option>
                           </el-select>
                       </div>
-                     
                       <div style="display:inline-block;">
                           <label class="radio-label" style="padding-left:10px;">备注</label>
                           <el-input v-model="form.memo" placeholder="" style="width: 490px; " />
@@ -162,54 +156,52 @@
 
                       </el-table-column>
                       <el-table-column prop="lot" label="批次" width="150px">
-                        <template #default="{ row }">
-                                <div style="display:flex;justify-content: flex-start;">
-                                    <el-input v-model="row.lot" type="text" placeholder="" />
-                                    <el-button type="primary" style="margin-top: 4px;" size="small"
-                                        @click="showLot(row)">选择</el-button>
-                                </div>
-                            </template>
+                          <!-- <template #default="{ row }">
+                            <el-input v-model="row.lot" type="text" placeholder="" />
+                        </template> -->
                       </el-table-column>
-                      <el-table-column prop="qty" label="数量" width="160px">
-                            <template #default="{ row }">
 
-                                <div style="display:flex;justify-content: flex-start;">
-                                    <el-input v-model="row.qty" @change="setAmt(row)" type="number"
-                                        @focus="focus($event)" placeholder="" />
-                                    <el-button type="primary" style="margin-top: 4px;" size="small"
-                                        @click="showPieQty(row)">辅助</el-button>
-                                </div>
-
-                            </template>
-                        </el-table-column>
                       <el-table-column prop="price" label="单价" width="90px">
-                          <template #default="{ row }">
-                              <el-input v-model="row.price" @change="setAmt(row)" type="number" @focus="focus($event)"
-                                  placeholder="" />
-                          </template>
-                      </el-table-column>
-                      <el-table-column prop="amt" label="金额" width="120px">
                          
                       </el-table-column>
-                      <el-table-column prop="expdate" label="保质期" width="180px">
+                      <el-table-column prop="qty0" label="财存数量" width="90px">
+                        
+                      </el-table-column>
+                      
+                      <el-table-column prop="qty" label="实存数量" width="160px">
                           <template #default="{ row }">
-                              <el-date-picker v-model="row.expdate" value-format="YYYY-MM-DD" style="width: 140px;"
-                                  type="date" placeholder="选择日期">
-                              </el-date-picker>
+
+                              <div style="display:flex;justify-content: flex-start;">
+                                  <el-input v-model="row.qty" @change="setAmt(row)" type="number"
+                                      @focus="focus" placeholder="" />
+                                  <el-button type="primary" style="margin-top: 4px;" size="small"
+                                      @click="showPieQty(row)">辅助</el-button>
+                              </div>
+
                           </template>
                       </el-table-column>
-                      <el-table-column prop="memo" label="备注" width="200px">
+                      <el-table-column prop="qtys" label="盈亏数量" width="90px">
                           <template #default="{ row }">
-                              <el-input v-model="row.memo" type="text" @focus="focus($event)" placeholder="" />
+                              {{ row.qty - row.qty0 }}
                           </template>
+                      </el-table-column>
+                      <el-table-column prop="amt" label="盈亏金额" width="120px">
+                          <template #default="{ row }">
+                              {{ (row.price * (row.qty - row.qty0)).toFixed(2) }}
+                          </template>
+                      </el-table-column>
+                      <el-table-column prop="factamt" label="实存金额" width="120px">
+                          <template #default="{row}">
+                              {{ (row.price * row.qty).toFixed(2) }}
+            </template>
                       </el-table-column>
                       <el-table-column align="center"   fixed="right" width="100px">
-                            <template #default="{ row }"  v-if="form.status == '0'" >
-                                <el-button type="danger" size="small"   @click="delGoods(row)">
-                                    删除
-                                </el-button>
-                            </template>
-                        </el-table-column>  
+                          <template #default="{ row }"  v-if="form.status == '0'" >
+                              <el-button type="danger" size="small"   @click="delGoods(row)">
+                                  删除
+                              </el-button>
+                          </template>
+                      </el-table-column>  
                   </el-table>
               </el-main>
               <el-footer style="height: 140px;">
@@ -235,8 +227,8 @@
                           <el-input v-model="numinfo.MinQty" placeholder="" readonly style="width: 120px; " />
                       </div>
                       <div style="display:inline-block;">
-                          <el-button @click="viewGoods" style="margin-left: 10px;" type="primary"
-                              :icon="Document" title="查看商品详情"></el-button>
+                          <el-button @click="viewGoods" style="margin-left: 10px;" type="primary" :icon="Document"
+                              title="查看商品详情"></el-button>
                       </div>
                       
                   </el-row>
@@ -294,13 +286,12 @@
                       <el-button type="primary" @click="doPrint(form)" :disabled="!isedit"
                           :icon="Printer">打印</el-button>
                       <el-button type="warning" @click="doCheck(form)" :disabled="!isedit"
-                          v-if="isNull(form.man2) && form.status == '0'" :icon="Check">审核</el-button>
+                          v-if="isNull(form.man2) && form.crtstat == '0'" :icon="Check">审核</el-button>
                       <el-button type="warning" @click="doUnCheck(form)" :disabled="!isedit"
-                          v-if="!isNull(form.man2) && form.status == '0'" :icon="Check">取消审核</el-button>
-                      <el-button type="primary" @click="doPass(form)" :disabled="!isedit" v-if="form.status == '0'"
-                          :icon="Coordinate">过账</el-button>
+                          v-if="!isNull(form.man2) && form.crtstat == '0'" :icon="Check">取消审核</el-button>
+                    
                       <el-button type="success" :icon="Edit" @click="saveData"
-                          v-if="(form.status == '0' && isNull(form.man2)) || !isedit">保存</el-button>
+                          v-if="(form.crtstat == '0' && isNull(form.man2)) || !isedit">保存</el-button>
                       <el-button type="danger" :icon="Close" @click="dlgEdit = false">退出</el-button>
                   </el-row>
               </el-footer>
@@ -311,27 +302,33 @@
           <Goods @setGoods="setGoods" @setMoreGoods="setMoreGoods" @goodsClose="goodsClose"></Goods>
       </Dialog>
 
-      <Dialog v-model="dlgReport"  width="65%" maxHeight="500px" :title="rptTitle">           
+      <Dialog v-model="dlgReport" width="65%" maxHeight="500px" :title="rptTitle">
           <Report ref="myrpt1"></Report>
       </Dialog>
 
 
-      <Dialog v-model="dlgItem" title="查看"  width="1100px" maxHeight="500px">
-         
+      <Dialog v-model="dlgItem" title="查看" width="1100px" maxHeight="500px">
+
           <Item :form="itemInfo"></Item>
           <el-row style="margin-bottom: -20px; margin-top: 10px; display: flex; justify-content: flex-end;">
               <el-button @click="dlgItem = false">关 闭</el-button>
           </el-row>
       </Dialog>
-      <Dialog v-model="dlgLot" title="选择批次"  width="70%">
-           
-           <Lot ref="lotRef" @setlot="setlot" @lotClose="lotClose"></Lot>
+      <Dialog v-model="dlgLot" width="70%" :show-close="false" :close-on-click-modal="false" top="50px">
+          <div slot="title"
+              style="display: flex;height: 40px; line-height: 40px;background-color: #409EFF;margin: -20px;">
+              <div style="flex: 1;text-align: left;color: #FFFFFF;margin-left: 20px;">选择批次</div>
+              <div style="flex: 1;text-align: center;color: #FFFFFF;"></div>
+              <div style="flex: 1;text-align: right;">
+                  <i class="el-icon-close closeico"
+                      style="color: #FFFFFF; font-size: 20px;line-height: 40px;margin-right: 20px;"
+                      @click="dlgLot = false"></i>
+              </div>
+          </div>
+          <Lot ref="lot" @setlot="setlot" @lotClose="lotClose"></Lot>
 
-       </Dialog>
-
-
-       <PieQty ref="pieQtyRef" :pie-data="pieData" @confirm="confirmPieQty"></PieQty>
-
+      </Dialog>
+      <PieQty ref="pieQtyRef" :pie-data="pieData" @confirm="confirmPieQty"></PieQty>
 
   </ContentWrap>
 </template>
@@ -361,20 +358,20 @@ const size = ref<ComponentSize>('default')
 const background = ref(false)
 // 定义组件名称
 defineOptions({
-  name: 'DC'
+  name: 'DS'
 })
 
 const confirmPieQty = (qty: number) => {
-    pieRow.value.qty = qty
+  pieRow.value.qty = qty
 }
 const pieRow = ref<any>({})
 const pieQtyRef = ref(PieQty)
 const pieData = ref<any>({})
 const showPieQty = (row: any) => {
-    pieRow.value = row
-    pieData.value = { ...row }
-    pieData.value.qty =  undefined   
-    pieQtyRef.value.dlgPie = true
+  pieRow.value = row
+  pieData.value = { ...row }
+  pieData.value.qty =  undefined   
+  pieQtyRef.value.dlgPie = true
 }
 
 
@@ -405,11 +402,11 @@ const searchSchema = reactive<FormSchema[]>([
       }
   },
   {
-      field: 'vndr',
-      label: '供应商',
+      field: 'wrhs',
+      label: '仓库',
       component: 'Select',
       optionApi: async () => {
-          let data = custlist.value.map((v: any) => ({
+          let data = storelist.value.map((v: any) => ({
               label: v.name,
               value: v.code
           }))
@@ -545,8 +542,10 @@ interface OptionItem {
   name: string
   spec?: string
   unit?: string
-    purunit?: string
-    cvrnum?: number
+  purunit?: string
+  cvrnum?: number
+
+
 }
 
 interface FormData {
@@ -615,7 +614,7 @@ interface NumInfo {
 }
 
 // 响应式数据
-const ttype = ref('DC')
+const ttype = ref('DS')
 const dlgGoods = ref(false)
 const tableHeight = ref(window.innerHeight - 230)
 const mainHeight = ref(window.innerHeight - 50)
@@ -641,6 +640,7 @@ const custlist = ref<OptionItem[]>([])
 const userlist = ref<OptionItem[]>([])
 const deptlist = ref<OptionItem[]>([])
 const storelist = ref<OptionItem[]>([])
+  const storelista = ref<OptionItem[]>([])
 const settlelist = ref<OptionItem[]>([])
 const items = ref<ItemData[]>([])
 const numinfo = ref<NumInfo>({})
@@ -664,7 +664,6 @@ const isNull = (value: any) => {
   return isEmpty(value)
 }
 
-const DiscardTypes = ref<OptionItem[]>([])
 const initData = () => {
   usercode.value = userStore.userInfo.code || ''
   request.post({ url: '/api/config/getAllData', data: {} }).then(res => {
@@ -672,22 +671,34 @@ const initData = () => {
       userlist.value = res.data.usrs
       deptlist.value = res.data.depts
       storelist.value = res.data.stores
+      storelista.value = res.data.storesdepts
       settlelist.value = res.data.settles
-  }).catch(error => { })
-
-  request.post({ url: '/api/config/getCodes', data: {category: 'B'} }).then(res => {
-      DiscardTypes.value = res.data
   }).catch(error => { })
 }
 
-const focus = (event: FocusEvent) => {
-   // 拿到真正的 input 元素
-   const realInput = (event.currentTarget as HTMLElement).querySelector('input')
-    realInput?.select()
+const focus = (event: any) => {
+  // 拿到真正的 input 元素
+  const realInput = (event.currentTarget as HTMLElement).querySelector('input')
+  realInput?.select()
 }
 
 const addGoods = () => {
-  dlgGoods.value = true
+  if (isEmpty(form.value.dept)) {
+      ElMessage.error('请选择部门')
+      return
+  }
+  ElMessageBox.confirm('是否加载仓库中的全部物资？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+  }).then(async () => {
+      getData([], true)
+  }).catch(async () => {
+      dlgGoods.value = true
+  })
+}
+const changeStore = () => {
+  items.value = []
 }
 
 const goodsClose = () => {
@@ -696,67 +707,65 @@ const goodsClose = () => {
 
 const setGoods = (item: OptionItem) => {
   dlgGoods.value = false
-  const obj: ItemData = {
-      item: item.code,
-      name: item.name,
-      spec: item.spec,
-      unit: item.unit,
-      lot: '',
-      qty: undefined,
-      price: undefined,
-      amt: undefined,
-      expdate: '',
-      memo: '',
-      tline: '',
-      pieqty: undefined,
-      purunit: item.purunit,
-      cvrnum: item.cvrnum,
-      index: addIndex.value++
-  }
-  items.value.push(obj)
-  nextTick(() => {
-      if (gitems.value && gitems.value.data) {
-          gitems.value.setCurrentRow(gitems.value.data[items.value.length - 1])
-      }
-  })
+  getData([item.code],false)
 }
 
 const setMoreGoods = (rows: OptionItem[]) => {
   dlgGoods.value = false
   const objs = JSON.parse(JSON.stringify(rows))
-  objs.forEach((item: OptionItem) => {
-      const obj: ItemData = {
-          item: item.code,
-          name: item.name,
-          spec: item.spec,
-          unit: item.unit,
-          lot: '',
-          qty: undefined,
-          price: undefined,
-          amt: undefined,
-          expdate: '',
-          memo: '',
-          tline: '',
-          pieqty: undefined,
-          purunit: item.purunit,
-          cvrnum: item.cvrnum,
-          index: addIndex.value++
+  getData(objs.map((item: OptionItem) => item.code),false)
+}
+
+const getData = (codes: String[], isall?: boolean) => {
+  request.post({
+      url: '/api/store/selectICData', data: {
+          location: form.value.dept,
+          items: codes,
+          isall: isall
       }
-      items.value.push(obj)
+  }).then(res => {
+      let data = res.data || []
+      data.forEach((item: any) => {
+          if (!items.value.some((i: ItemData) => i.item == item.item)) {
+              item.qty = item.qty || 0
+              const obj: ItemData = {
+                  item: item.item,
+                  name: item.name,
+                  spec: item.spec,
+                  unit: item.unit,
+                  lot: '',
+                  qty: item.qty,
+                  qty0: item.qty0,
+                  price: item.price,
+                  amt: undefined,
+                  expdate: '',
+                  memo: '',
+                  tline: '',
+                  pieqty: undefined,
+                  purunit: item.purunit,
+                  cvrnum: item.cvrnum,
+                  index: addIndex.value++
+              }
+              items.value.push(obj)
+          }
+      })
       nextTick(() => {
           if (gitems.value && gitems.value.data) {
               gitems.value.setCurrentRow(gitems.value.data[items.value.length - 1])
           }
       })
-  })
+
+  }).catch(error => { })
+
+}
+const delGoods = (row: ItemData) => {       
+  items.value = items.value.filter((item: any) => item.index != row.index)
 }
 
-const delGoods = (row: ItemData) => {       
-    items.value = items.value.filter((item: any) => item.index != row.index)
-}
+
 const checkList = ref<FormData[]>([])
 const setCheck = (val: FormData[]) => {
-    checkList.value = val
+  checkList.value = val
 }
 
 const rowChage = (currentRow: ItemData) => {
@@ -893,6 +902,8 @@ const showEdit = (row: any) => {
   edit(row)
 }
 
+const addIndex = ref(0)
+
 const edit = (item: any) => {
   dlgTitle.value = '编辑'
   isedit.value = true
@@ -900,10 +911,9 @@ const edit = (item: any) => {
   dlgEdit.value = true
   loadInfo(item.tcode)
 }
-const addIndex = ref(0)
 const loadInfo = (tcode: string) => {
   request.post({ url: '/api/tran/getIvtran', data: { tcode: tcode } }).then(res => {
-       
+      
       form.value = res.data
       form.value.editor = usercode.value || ''
       showGrid(form.value.tcode || '')
@@ -937,9 +947,9 @@ const showGrid = (code: string) => {
           code: code
       }
   }).then(res => {
-    res.data.forEach((item: any) => {
-            item.index = addIndex.value++
-        })  
+      res.data.forEach((item: any) => {
+          item.index = addIndex.value++
+      })  
       items.value = res.data
       if (items.value.length > 0) {
           nextTick(() => {
@@ -1068,8 +1078,8 @@ const viewReport = () => {
   nextTick(() => {
       if (myrpt1.value) {
           myrpt1.value.loadReportData(
-             'Vdr05',
-             {Vndr:form.value.vndr}
+              'Vdr05',
+              { Vndr: form.value.vndr }
           )
       }
   })
@@ -1077,13 +1087,13 @@ const viewReport = () => {
 
 const doPrint = (item: any) => {
   dlgReport.value = true
-  rptTitle.value = "耗用单"
+  rptTitle.value = "盘点单"
   console.log(myrpt1)
   nextTick(() => {
       if (myrpt1.value) {
           myrpt1.value.loadReportData(
-               'DCBill',
-               { TCode: form.value.tcode }
+              'DSBill',
+              { TCode: form.value.tcode }
           )
       }
   })
@@ -1132,18 +1142,18 @@ const doUnCheck = (item: any) => {
 }
 
 const doPass = (item: any) => {
-  ElMessageBox.confirm('是否确定过账单据?', '提示', {
+  ElMessageBox.confirm('是否确定生成盘盈单/盘亏单?', '提示', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
   }).then(() => {
       request.post({
-          url: '/api/tran/passTran', data: {
+          url: '/api/tran/passTranIC', data: {
               tcode: item.tcode
           }
       }).then(res => {
           if (res.code == 0) {
-              ElMessage.success('过账成功')
+              ElMessage.success('生成成功')
               refData()
               if (dlgEdit.value)
                   loadInfo(item.tcode)
@@ -1158,14 +1168,14 @@ const passTrans = () => {
       return
   }
   let fnum = 0;
-  ElMessageBox.confirm('是否确定过账单据?', '提示', {
+  ElMessageBox.confirm('是否确定生成盘盈单/盘亏单?', '提示', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
   }).then(() => {
       checkList.value.forEach(o => {
           request.post({
-              url: '/api/tran/passTran', data: {
+              url: '/api/tran/passTranIC', data: {
                   tcode: o.tcode
               }
           }).then(res => {
@@ -1279,17 +1289,14 @@ const lotClose = () => {
 }
 
 const showLot = (item: ItemData) => {
-  if(isEmpty(form.value.dept)){
-    ElMessage.success('请先选择部门！')
-    return
-  }
   dlgLot.value = true
   nextTick(() => {
       if (lotRef.value) {
-          lotRef.value.loadData(item.item, form.value.dept)
+          lotRef.value.loadData(item.item, form.value.wrhs)
       }
   })
 }
+
 
 
 // 生命周期
@@ -1297,7 +1304,6 @@ onMounted(() => {
   getList()
   initData()
 })
-
 
 </script>
 
