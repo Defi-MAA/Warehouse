@@ -4,7 +4,7 @@
 
 
           <div style="border-bottom: 1px solid #e4e7ed;">
-              <Search show-expand expand-field="status" :schema="searchSchema" @reset="setSearchParams"
+              <Search show-expand expand-field="wrhs" :schema="searchSchema" @reset="setSearchParams"
                   @search="setSearchParams" />
           </div>
           <div class="mb-10px" style="margin-top: 10px;">
@@ -28,6 +28,12 @@
                   </template>
 
               </el-table-column>
+              <el-table-column prop="status" label="审核" width="60px">
+          <template #default="{ row }" >
+            {{ row.man2  ? '是' : '否' }}
+          </template>
+
+        </el-table-column>
               <el-table-column prop="tdate" label="事务日期" sortable="custom" show-overflow-tooltip width="120px">
               </el-table-column>
               <el-table-column prop="tcode" label="事务编号" sortable="custom" show-overflow-tooltip width="130px">
@@ -409,6 +415,26 @@ const searchSchema = reactive<FormSchema[]>([
       }
   },
   {
+      field: 'status',
+      label: '过账',
+      component: 'Select',
+      optionApi: async () => {
+          return typeids.value
+      },
+      value: '-1'
+  },
+  
+{
+    field: 'chkstatus',
+    label: '审核',
+    component: 'Select',
+    optionApi: async () => {
+      return typeids.value
+    },
+    value: '-1'
+  },
+
+  {
       field: 'wrhs',
       label: '仓库',
       component: 'Select',
@@ -426,27 +452,8 @@ const searchSchema = reactive<FormSchema[]>([
       label: '事务编号',
       component: 'Input'
   },
-  {
-      field: 'status',
-      label: '过账',
-      component: 'Select',
-      optionApi: async () => {
-          return typeids.value
-      },
-      value: '-1'
-  },
-  {
-      field: 'wrhs',
-      label: '仓库',
-      component: 'Select',
-      optionApi: async () => {
-          let data = storelist.value.map((v: any) => ({
-              label: v.name,
-              value: v.code
-          }))
-          return data
-      }
-  },
+ 
+  
   {
       field: 'dept',
       label: '部门',

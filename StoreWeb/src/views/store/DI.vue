@@ -4,7 +4,7 @@
 
 
             <div style="border-bottom: 1px solid #e4e7ed;">
-                <Search show-expand expand-field="status" :schema="searchSchema" @reset="setSearchParams"
+                <Search show-expand expand-field="vndr" :schema="searchSchema" @reset="setSearchParams"
                     @search="setSearchParams" />
             </div>
             <div class="mb-10px" style="margin-top: 10px;">
@@ -18,13 +18,19 @@
             <el-table v-loading="listLoading" :data="list" @sort-change="sort" border fit highlight-current-row
                 style="width: 100%" :height="tableHeight - 50" @selection-change="setCheck" @row-dblclick="showEdit"
                 id="out-table" :header-cell-style="{ color: '#000000' }" ref="tableRef" :default-sort="{
-			prop: 'tcode',
-			order: 'descending'
-		}" >
+                    prop: 'tcode',
+                    order: 'descending'
+                }">
                 <el-table-column type="selection" width="35" />
                 <el-table-column prop="status" label="过账" width="60px">
                     <template #default="{ row }">
                         {{ row.status == 1 ? '是' : '否' }}
+                    </template>
+
+                </el-table-column>
+                <el-table-column prop="status" label="审核" width="60px">
+                    <template #default="{ row }">
+                        {{ row.man2 ? '是' : '否' }}
                     </template>
 
                 </el-table-column>
@@ -139,7 +145,7 @@
                     </el-row>
                     <el-row>
 
-                        
+
                         <div style="display:inline-block;">
                             <label class="radio-label" style="padding-left:10px;">供应商</label>
                             <el-select style="width: 120px; " v-model="form.vndr" placeholder="请选择">
@@ -164,8 +170,8 @@
                 </el-header>
                 <el-main>
                     <el-table v-loading="listLoading1" :data="items" :border="true" fit highlight-current-row
-                        style="width: 100%" height="330px" id="out-table1" ref="gitems"
-                        @current-change="rowChage" :header-cell-style="{ color: '#000000' }">
+                        style="width: 100%" height="330px" id="out-table1" ref="gitems" @current-change="rowChage"
+                        :header-cell-style="{ color: '#000000' }">
                         <el-table-column prop="item" show-overflow-tooltip label="" width="90px">
                             <template #header>
                                 <el-button type="primary" size="small" @click="addGoods">增加物资</el-button>
@@ -184,7 +190,8 @@
                             <template #default="{ row }">
                                 <div style="display:flex;justify-content: flex-start;">
                                     <el-input v-model="row.lot" type="text" placeholder="" />
-                                    <el-button type="primary" style="margin-top: 4px;" size="small" @click="showLot(row)">选择</el-button>
+                                    <el-button type="primary" style="margin-top: 4px;" size="small"
+                                        @click="showLot(row)">选择</el-button>
                                 </div>
                             </template>
                         </el-table-column>
@@ -207,7 +214,7 @@
                             </template>
                         </el-table-column>
                         <el-table-column prop="amt" label="金额" width="100px">
-                           
+
                         </el-table-column>
                         <el-table-column prop="expdate" label="保质期" width="180px">
                             <template #default="{ row }">
@@ -221,9 +228,9 @@
                                 <el-input v-model="row.memo" type="text" @focus="focus($event)" placeholder="" />
                             </template>
                         </el-table-column>
-                        <el-table-column align="center"   fixed="right" width="100px">
-                            <template #default="{ row }"  v-if="form.status == '0'" >
-                                <el-button type="danger" size="small"   @click="delGoods(row)">
+                        <el-table-column align="center" fixed="right" width="100px">
+                            <template #default="{ row }" v-if="form.status == '0'">
+                                <el-button type="danger" size="small" @click="delGoods(row)">
                                     删除
                                 </el-button>
                             </template>
@@ -253,12 +260,12 @@
                             <el-input v-model="numinfo.MinQty" placeholder="" readonly style="width: 120px; " />
                         </div>
                         <div style="display:inline-block;">
-                            <el-button @click="viewGoods" style="margin-left: 10px;" type="primary"
-                                :icon="Document" title="查看商品详情"></el-button>
+                            <el-button @click="viewGoods" style="margin-left: 10px;" type="primary" :icon="Document"
+                                title="查看商品详情"></el-button>
                         </div>
                         <div style="display:inline-block;">
-                            <el-button @click="viewReport" style="margin-left: 10px;" type="primary"
-                                :icon="Notebook" title="查看库存详情"></el-button>
+                            <el-button @click="viewReport" style="margin-left: 10px;" type="primary" :icon="Notebook"
+                                title="查看库存详情"></el-button>
                         </div>
                     </el-row>
                     <el-row>
@@ -332,24 +339,24 @@
             <Goods @setGoods="setGoods" @setMoreGoods="setMoreGoods" @goodsClose="goodsClose"></Goods>
         </Dialog>
 
-        <Dialog v-model="dlgReport"  width="65%" maxHeight="500px" :title="rptTitle">           
+        <Dialog v-model="dlgReport" width="65%" maxHeight="500px" :title="rptTitle">
             <Report ref="myrpt1"></Report>
         </Dialog>
 
 
-        <Dialog v-model="dlgItem" title="查看"  width="1100px" maxHeight="500px">
-           
+        <Dialog v-model="dlgItem" title="查看" width="1100px" maxHeight="500px">
+
             <Item :form="itemInfo"></Item>
             <el-row style="margin-bottom: -20px; margin-top: 10px; display: flex; justify-content: flex-end;">
                 <el-button @click="dlgItem = false">关 闭</el-button>
             </el-row>
         </Dialog>
-        <Dialog v-model="dlgLot" title="选择批次"  width="70%">
-           
-           <Lot ref="lotRef" @setlot="setlot" @lotClose="lotClose"></Lot>
+        <Dialog v-model="dlgLot" title="选择批次" width="70%">
 
-       </Dialog>
-       <PieQty ref="pieQtyRef" :pie-data="pieData" @confirm="confirmPieQty"></PieQty>
+            <Lot ref="lotRef" @setlot="setlot" @lotClose="lotClose"></Lot>
+
+        </Dialog>
+        <PieQty ref="pieQtyRef" :pie-data="pieData" @confirm="confirmPieQty"></PieQty>
 
     </ContentWrap>
 </template>
@@ -391,7 +398,7 @@ const pieData = ref<any>({})
 const showPieQty = (row: any) => {
     pieRow.value = row
     pieData.value = { ...row }
-    pieData.value.qty =  undefined   
+    pieData.value.qty = undefined
     pieQtyRef.value.dlgPie = true
 }
 
@@ -424,6 +431,25 @@ const searchSchema = reactive<FormSchema[]>([
         }
     },
     {
+        field: 'status',
+        label: '过账',
+        component: 'Select',
+        optionApi: async () => {
+            return typeids.value
+        },
+        value: '-1'
+    },
+    {
+        field: 'chkstatus',
+        label: '审核',
+        component: 'Select',
+        optionApi: async () => {
+            return typeids.value
+        },
+        value: '-1'
+    },
+
+    {
         field: 'vndr',
         label: '供应商',
         component: 'Select',
@@ -441,15 +467,7 @@ const searchSchema = reactive<FormSchema[]>([
         label: '事务编号',
         component: 'Input'
     },
-    {
-        field: 'status',
-        label: '过账',
-        component: 'Select',
-        optionApi: async () => {
-            return typeids.value
-        },
-        value: '-1'
-    },
+
     {
         field: 'wrhs',
         label: '仓库',
@@ -696,8 +714,8 @@ const initData = () => {
 }
 
 const focus = (event: FocusEvent) => {
-     // 拿到真正的 input 元素
-     const realInput = (event.currentTarget as HTMLElement).querySelector('input')
+    // 拿到真正的 input 元素
+    const realInput = (event.currentTarget as HTMLElement).querySelector('input')
     realInput?.select()
 }
 
@@ -919,7 +937,7 @@ const edit = (item: any) => {
 const addIndex = ref(0)
 const loadInfo = (tcode: string) => {
     request.post({ url: '/api/tran/getIvtran', data: { tcode: tcode } }).then(res => {
-        
+
         form.value = res.data
         form.value.editor = usercode.value || ''
         showGrid(form.value.tcode || '')
@@ -955,7 +973,7 @@ const showGrid = (code: string) => {
     }).then(res => {
         res.data.forEach((item: any) => {
             item.index = addIndex.value++
-        })  
+        })
         items.value = res.data
         if (items.value.length > 0) {
             nextTick(() => {
@@ -1084,8 +1102,8 @@ const viewReport = () => {
     nextTick(() => {
         if (myrpt1.value) {
             myrpt1.value.loadReportData(
-               'Vdr05',
-               {Vndr:form.value.vndr}
+                'Vdr05',
+                { Vndr: form.value.vndr }
             )
         }
     })
@@ -1098,8 +1116,8 @@ const doPrint = (item: any) => {
     nextTick(() => {
         if (myrpt1.value) {
             myrpt1.value.loadReportData(
-                 'DIBill',
-                 { TCode: form.value.tcode }
+                'DIBill',
+                { TCode: form.value.tcode }
             )
         }
     })
@@ -1295,7 +1313,7 @@ const lotClose = () => {
 }
 
 const showLot = (item: ItemData) => {
-  
+
     dlgLot.value = true
     nextTick(() => {
         if (lotRef.value) {
@@ -1320,6 +1338,7 @@ onMounted(() => {
     color: #000;
     font-weight: normal;
     line-height: 40px;
+
     padding: 0 12px 0 30px;
 }
 

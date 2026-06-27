@@ -4,7 +4,7 @@
 
 
             <div style="border-bottom: 1px solid #e4e7ed;">
-                <Search show-expand expand-field="status" :schema="searchSchema" @reset="setSearchParams"
+                <Search show-expand expand-field="vndr" :schema="searchSchema" @reset="setSearchParams"
                     @search="setSearchParams" />
             </div>
             <div class="mb-10px" style="margin-top: 10px;">
@@ -28,6 +28,13 @@
                     </template>
 
                 </el-table-column>
+                <el-table-column prop="status" label="审核" width="60px">
+                    <template #default="{ row }">
+                        {{ row.man2 ? '是' : '否' }}
+                    </template>
+
+                </el-table-column>
+
                 <el-table-column prop="tdate" label="事务日期" sortable="custom" show-overflow-tooltip width="120px">
                 </el-table-column>
                 <el-table-column prop="tcode" label="事务编号" sortable="custom" show-overflow-tooltip width="130px">
@@ -152,8 +159,8 @@
                 </el-header>
                 <el-main>
                     <el-table v-loading="listLoading1" :data="items" :border="true" fit highlight-current-row
-                        style="width: 100%" height="330px" id="out-table1" ref="gitems"
-                        @current-change="rowChage" :header-cell-style="{ color: '#000000' }">
+                        style="width: 100%" height="330px" id="out-table1" ref="gitems" @current-change="rowChage"
+                        :header-cell-style="{ color: '#000000' }">
                         <el-table-column prop="item" show-overflow-tooltip label="" width="90px">
                             <template #header>
                                 <el-button type="primary" size="small" @click="addGoods">增加物资</el-button>
@@ -381,7 +388,7 @@ const pieData = ref<any>({})
 const showPieQty = (row: any) => {
     pieRow.value = row
     pieData.value = { ...row }
-    pieData.value.qty =  undefined   
+    pieData.value.qty = undefined
     pieQtyRef.value.dlgPie = true
 }
 
@@ -414,6 +421,25 @@ const searchSchema = reactive<FormSchema[]>([
         }
     },
     {
+        field: 'status',
+        label: '过账',
+        component: 'Select',
+        optionApi: async () => {
+            return typeids.value
+        },
+        value: '-1'
+    },
+
+    {
+        field: 'chkstatus',
+        label: '审核',
+        component: 'Select',
+        optionApi: async () => {
+            return typeids.value
+        },
+        value: '-1'
+    },
+    {
         field: 'vndr',
         label: '供应商',
         component: 'Select',
@@ -431,15 +457,7 @@ const searchSchema = reactive<FormSchema[]>([
         label: '事务编号',
         component: 'Input'
     },
-    {
-        field: 'status',
-        label: '过账',
-        component: 'Select',
-        optionApi: async () => {
-            return typeids.value
-        },
-        value: '-1'
-    },
+
     {
         field: 'wrhs',
         label: '仓库',
@@ -688,7 +706,7 @@ const focus = (event: FocusEvent) => {
     // 拿到真正的 input 元素
     const realInput = (event.currentTarget as HTMLElement).querySelector('input')
     realInput?.select()
-    }
+}
 
 const addGoods = () => {
     dlgGoods.value = true
@@ -1284,10 +1302,10 @@ const lotClose = () => {
 }
 
 const showLot = (item: ItemData) => {
-  if(isEmpty(form.value.wrhs)){
-    ElMessage.success('请先选择仓库！')
-    return
-  }
+    if (isEmpty(form.value.wrhs)) {
+        ElMessage.success('请先选择仓库！')
+        return
+    }
     dlgLot.value = true
     nextTick(() => {
         if (lotRef.value) {

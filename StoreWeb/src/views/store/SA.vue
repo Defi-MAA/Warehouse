@@ -4,7 +4,7 @@
 
 
             <div style="border-bottom: 1px solid #e4e7ed;">
-                <Search show-expand expand-field="status" :schema="searchSchema" @reset="setSearchParams"
+                <Search show-expand expand-field="vndr" :schema="searchSchema" @reset="setSearchParams"
                     @search="setSearchParams" />
             </div>
             <div class="mb-10px" style="margin-top: 10px;">
@@ -28,6 +28,13 @@
                     </template>
 
                 </el-table-column>
+                <el-table-column prop="status" label="审核" width="60px">
+                    <template #default="{ row }">
+                        {{ row.man2 ? '是' : '否' }}
+                    </template>
+
+                </el-table-column>
+
                 <el-table-column prop="tdate" label="事务日期" sortable="custom" show-overflow-tooltip width="120px">
                 </el-table-column>
                 <el-table-column prop="tcode" label="事务编号" sortable="custom" show-overflow-tooltip width="130px">
@@ -152,8 +159,8 @@
                 </el-header>
                 <el-main>
                     <el-table v-loading="listLoading1" :data="items" :border="true" fit highlight-current-row
-                        style="width: 100%" height="330px" id="out-table1" ref="gitems"
-                        @current-change="rowChage" :header-cell-style="{ color: '#000000' }">
+                        style="width: 100%" height="330px" id="out-table1" ref="gitems" @current-change="rowChage"
+                        :header-cell-style="{ color: '#000000' }">
                         <el-table-column prop="item" show-overflow-tooltip label="" width="90px">
                             <template #header>
                                 <el-button type="primary" size="small" @click="addGoods">增加物资</el-button>
@@ -190,11 +197,11 @@
                             </template>
                         </el-table-column>
                         <el-table-column prop="price" label="库存单价" width="90px">
-                           
+
                         </el-table-column>
                         <el-table-column prop="amt" label="库存金额" width="90px">
                             <template #default="{ row }">
-                                {{ row.qty * row.price||0 }}
+                                {{ row.qty * row.price || 0 }}
                             </template>
                         </el-table-column>
 
@@ -206,17 +213,17 @@
                         </el-table-column>
                         <el-table-column prop="factamt" label="销售金额" width="90px">
                             <template #default="{ row }">
-                                {{ row.qty * row.curprice||0 }}
+                                {{ row.qty * row.curprice || 0 }}
                             </template>
                         </el-table-column>
 
-                        <el-table-column  label="存销差额" width="90px">
+                        <el-table-column label="存销差额" width="90px">
                             <template #default="{ row }">
-                                {{( row.qty * row.curprice - row.qty * row.price) ||0}}
+                                {{ (row.qty * row.curprice - row.qty * row.price) || 0 }}
                             </template>
                         </el-table-column>
                         <el-table-column prop="expdate" label="保质期" width="180px">
-                          
+
                         </el-table-column>
                         <el-table-column prop="memo" label="备注" width="200px">
                             <template #default="{ row }">
@@ -343,13 +350,13 @@
                 <el-button @click="dlgItem = false">关 闭</el-button>
             </el-row>
         </Dialog>
-        <Dialog v-model="dlgLot" title="选择批次"  width="70%">
-           
-           <Lot ref="lotRef" @setlot="setlot" @lotClose="lotClose"></Lot>
+        <Dialog v-model="dlgLot" title="选择批次" width="70%">
 
-       </Dialog>
+            <Lot ref="lotRef" @setlot="setlot" @lotClose="lotClose"></Lot>
 
-       <PieQty ref="pieQtyRef" :pie-data="pieData" @confirm="confirmPieQty"></PieQty>
+        </Dialog>
+
+        <PieQty ref="pieQtyRef" :pie-data="pieData" @confirm="confirmPieQty"></PieQty>
 
 
     </ContentWrap>
@@ -392,7 +399,7 @@ const pieData = ref<any>({})
 const showPieQty = (row: any) => {
     pieRow.value = row
     pieData.value = { ...row }
-    pieData.value.qty =  undefined   
+    pieData.value.qty = undefined
     pieQtyRef.value.dlgPie = true
 }
 
@@ -424,6 +431,24 @@ const searchSchema = reactive<FormSchema[]>([
         }
     },
     {
+        field: 'status',
+        label: '过账',
+        component: 'Select',
+        optionApi: async () => {
+            return typeids.value
+        },
+        value: '-1'
+    },
+    {
+        field: 'chkstatus',
+        label: '审核',
+        component: 'Select',
+        optionApi: async () => {
+            return typeids.value
+        },
+        value: '-1'
+    },
+    {
         field: 'vndr',
         label: '供应商',
         component: 'Select',
@@ -441,15 +466,7 @@ const searchSchema = reactive<FormSchema[]>([
         label: '事务编号',
         component: 'Input'
     },
-    {
-        field: 'status',
-        label: '过账',
-        component: 'Select',
-        optionApi: async () => {
-            return typeids.value
-        },
-        value: '-1'
-    },
+
     {
         field: 'wrhs',
         label: '仓库',
@@ -604,7 +621,7 @@ interface ItemData {
     expdate?: string
     memo?: string
     tline?: string
-    pieqty?: number 
+    pieqty?: number
     purunit?: string
     cvrnum?: number
     [key: string]: any
@@ -1011,7 +1028,7 @@ const saveData = () => {
 
 const addData = () => {
     loading.value = true
-   
+
     request.post({
         url: '/api/tran/addTran', data: {
             trans: form.value,
@@ -1036,8 +1053,8 @@ const addData = () => {
 
 const editData = () => {
     loading.value = true
-    
-   
+
+
     request.post({
         url: '/api/tran/editTran', data: {
             trans: form.value,
@@ -1293,27 +1310,27 @@ const doUpdate = (item: any) => {
 }
 
 const setlot = (row: any) => {
-  dlgLot.value = false
-  curitem.value.lot = row.lot
-  curitem.value.price = row.price
-  curitem.value.expdate = row.expdate
+    dlgLot.value = false
+    curitem.value.lot = row.lot
+    curitem.value.price = row.price
+    curitem.value.expdate = row.expdate
 }
 
 const lotClose = () => {
-  dlgLot.value = false
+    dlgLot.value = false
 }
 
 const showLot = (item: ItemData) => {
-  if(isEmpty(form.value.wrhs)){
-    ElMessage.success('请先选择仓库！')
-    return
-  }
-  dlgLot.value = true
-  nextTick(() => {
-      if (lotRef.value) {
-          lotRef.value.loadData(item.item, form.value.wrhs)
-      }
-  })
+    if (isEmpty(form.value.wrhs)) {
+        ElMessage.success('请先选择仓库！')
+        return
+    }
+    dlgLot.value = true
+    nextTick(() => {
+        if (lotRef.value) {
+            lotRef.value.loadData(item.item, form.value.wrhs)
+        }
+    })
 }
 
 
